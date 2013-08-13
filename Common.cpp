@@ -523,3 +523,75 @@ string BuildHTMLResult(const Conf& conf,int state,
  return content;
 }
 //-------------------------------------------------------------------------------------------------
+
+void CoveredFileFilter(vector<string>& items)
+{
+ int k=0;
+ vector<string> dirlist;
+ vector<unsigned int> delindex;
+ for(k=items.size()-1;k>=0;k--)
+    {
+     string& item=items[k];
+     if(item[item.size()-1]=='/')//is dir
+       {
+        if(item.size()==2&&item=="./")
+          {
+           k--;
+           for(;k>=0;k--)
+               delindex.push_back(k);
+           break;
+          }
+        if(dirlist.empty())
+           dirlist.push_back(item);
+        else
+          {
+           pair<vector<string>::iterator,vector<string>::iterator> range;
+           range=equal_range(dirlist.begin(),dirlist.end(),item);
+           if(range.first!=range.second)
+              delindex.push_back(k);
+           else if(range.first==dirlist.begin())
+              dirlist.insert(range.first,item);
+           else
+              {
+               string& litem=*(range.first-1);
+               if(item.size()>litem.size()&&
+                  strncmp(litem.c_str(),item.c_str(),litem.size())==0)
+                  delindex.push_back(k);
+               else
+                  dirlist.insert(range.first,item);
+              }
+          }
+       }//end if dir
+     else if(dirlist.empty()==false)
+       {
+        pair<vector<string>::iterator,vector<string>::iterator> range;
+        range=equal_range(dirlist.begin(),dirlist.end(),item);
+        if(range.first==range.second&&range.first!=dirlist.begin())
+          {
+           string& litem=*(range.first-1);
+           if(item.size()>litem.size()&&
+              strncmp(litem.c_str(),item.c_str(),litem.size())==0)
+              delindex.push_back(k);
+          }
+       }
+    }//end for k
+ reverse(delindex.begin(),delindex.end());
+ vector<string> tmpitems;
+ unsigned int di=0;
+ unsigned int ii=0;
+ for(;ii<items.size()&&di<delindex.size();)
+    {
+     if(ii==delindex[di])
+       {
+        di++;
+        ii++;
+        continue;
+       }
+     tmpitems.push_back(items[ii]);
+     ii++;
+    }
+ for(;ii<items.size();ii++)
+        tmpitems.push_back(items[ii]);
+ items=tmpitems;
+}
+//-------------------------------------------------------------------------------------------------
