@@ -190,6 +190,13 @@ void sender_cleanup(int)
 {exit(1);}
 //-------------------------------------------------------------------------------------------------
 
+static void SetState(int state)
+{
+ my_state=state;
+ kobe_printf("%s\tstate=>%s\n",GetCurrentTime().c_str(),StateToString(state).c_str());
+}
+//-------------------------------------------------------------------------------------------------
+
 static void http_server_drive_machine(aeEventLoop* el,int fd,void* arg,int mask)
 {
  if(arg==NULL)
@@ -639,6 +646,7 @@ void mytest(int argc,char* argv[])//for kobetest
        rlog.Write(IN_CREATE,filename.c_str(),err);
       }
  */
+ /*
  Rlog rlog(conf);
  SenderStat ss(conf);
  ss.Reset();
@@ -672,7 +680,15 @@ void mytest(int argc,char* argv[])//for kobetest
        else
           cout<<errmsg<<endl;
       }//end while
- 
+ */
+ //----------------------------------------------
+ string content;
+ FileGetContent("dirfilter.txt",content);
+ vector<string> items;
+ SplitString(content,items,"\n");
+ CoveredFileFilter(items);
+ for(unsigned int i=0;i<items.size();i++)
+     cout<<items[i]<<endl;
  //----------------------------------------------
  exit(1);
 }
@@ -747,10 +763,10 @@ bool HTTPCommandFunction(const string& command,string& res)
           res="error: "+result;
           return true;
          }
-       my_state=STATE_TO_MASTER_WAIT_SLAVE_OK;
+       SetState(STATE_TO_MASTER_WAIT_SLAVE_OK);
       }
     else if(my_state==STATE_SLAVE)
-       my_state=STATE_TO_MASTER_WAIT_SLAVE_OK;
+       SetState(STATE_TO_MASTER_WAIT_SLAVE_OK);
     else
        res="error: cannot set master when state is "+my_state;
    }//end HTTP_COMMAND_SET_MASTER
@@ -758,9 +774,9 @@ bool HTTPCommandFunction(const string& command,string& res)
  else if(command==HTTP_COMMAND_SET_SLAVE)
    {
     if(my_state==STATE_NULL||my_state==STATE_SLAVE)
-       my_state=STATE_SLAVE;
+       SetState(STATE_SLAVE);
     else if(my_state==STATE_MASTER)
-       my_state=STATE_MASTER_TO_SLAVE1;
+       SetState(STATE_MASTER_TO_SLAVE1);
     else
        res="error: cannot set slave when state is "+my_state;
    }//end HTTP_COMMAND_SET_SLAVE
@@ -977,10 +993,7 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
           if(Notify(ROLE_WATCHER,UNIX_SOCKET_COMMAND_START_WATCHER,res)==true
              &&
              Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_START_SENDER1,res)==true)
-            {
-             my_state=STATE_MASTER;
-             printf("mystate=STATE_MASTER\n");
-            }
+             SetState(STATE_MASTER);
          }
       }
     else
@@ -991,10 +1004,7 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
     string res;
     if(Notify(ROLE_WATCHER,UNIX_SOCKET_COMMAND_STOP_WATCHER,res)==true&&
        Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE,res)==true)
-      {
-       my_state=STATE_MASTER_TO_SLAVE2;
-       printf("mystate=STATE_MASTER_TO_SLAVE2\n");
-      }
+       SetState(STATE_MASTER_TO_SLAVE2);
    }//end if my_state==STATE_MASTER_TO_SLAVE;
  else if(my_state==STATE_MASTER_TO_SLAVE2)
    {
@@ -1008,10 +1018,7 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
           time_t last_read_time=atoi(vec[1].c_str());
           if(time(NULL)-last_read_time>MASTER_WAIT_RLOG_NO_CHANGE_TO_SLAVE_TIME&&
             Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_STOP_SENDER,res))
-            {
-             my_state=STATE_SLAVE;
-             printf("mystate=STATE_SLAVE\n");
-            }
+             SetState(STATE_SLAVE);
          }
       }
    }//end if my_state==STATE_MASTER_TO_SLAVE2

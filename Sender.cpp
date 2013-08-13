@@ -5,10 +5,10 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
                                string& content,int& item_new_number)
 {
  string rsync_list_file_name=conf.sender_tmp_path+RSYNC_LIST_FILE_NAME;
- string prerp;
  string rp;
  item_new_number=0;
  content="";
+ vector<string> newitems;
  for(unsigned int i=0;i<items.size();i++)
     {
      if(items[i].filename.size()<=conf.local_dir.size())
@@ -26,38 +26,46 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
             case IN_MOVED_TO:
                  if(FileExists(items[i].filename)==false)
                    {
+                    #ifdef MYDEBUG
                     printf("skip not exists %s\n",items[i].filename.c_str());
+                    #endif
                     break;
                    }
                  rp=items[i].filename.substr(conf.local_dir.size());
-                 if(rp==prerp)
+                 if(rp.empty())
+                    rp="./";
+                 if(newitems.empty()==false&&rp==newitems.back())
                     break;
-                 content+=rp+"\n";
-                 item_new_number++;
-                 prerp=rp;
+                 newitems.push_back(rp);
                  break;
             case IN_DELETE:
             case IN_DELETE_SELF:
             case IN_MOVED_FROM:
-                 rp=items[i].filename.substr(conf.local_dir.size());
+                 rp=items[i].filename;
                  rp=GetParentPath(rp);
                  if(FileExists(rp)==false)
                    {
+                    #ifdef MYDEBUG
                     printf("skip not exists %s\n",rp.c_str());
+                    #endif
                     break;
                    }
-                 if(rp==prerp)
+                 rp=rp.substr(conf.local_dir.size());
+                 if(rp.empty())
+                    rp="./";
+                 if(newitems.empty()==false&&rp==newitems.back())
                     break;
-                 content+=rp+"\n";
-                 item_new_number++;
-                 prerp=rp;
+                 newitems.push_back(rp);
                  break;
             default:
                  break;
            }//end switch
     }//end for i
- if(content.empty())
+ if(newitems.empty())
     return true;
+ CoveredFileFilter(newitems);
+ for(unsigned int i=0;i<newitems.size();i++)
+     content+=newitems[i]+"\n";
  return FilePutContent(rsync_list_file_name,content);
 }
 //-------------------------------------------------------------------------------------------------
@@ -73,9 +81,12 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
    }
  if(content.empty())
    {
+    #ifdef MYDEBUG
     printf("%s\tskip empty rsync\n",GetCurrentTime().c_str());
+    #endif
     return true;
    }
+ string rsync_error_filename=conf.sender_tmp_path+RSYNC_ERROR_FILE_NAME;
  string command="rsync "+RSYNC_PARAMS;
  command+=" --files-from="+conf.sender_tmp_path+RSYNC_LIST_FILE_NAME;
  if(update_mode)
@@ -83,6 +94,7 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  if(conf.rsync_bwlimit>0)
     command+=" --bwlimit="+IntToStr(conf.rsync_bwlimit);
  command+=" "+conf.local_dir+" "+conf.remote_dir;
+ command+=" 2>"+rsync_error_filename;
  printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  #ifdef MYDEBUG
  printf("%s\n",content.c_str());
@@ -91,10 +103,31 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  if(status==-1)
     return false;
  int exitcode=WEXITSTATUS(status);
- if(exitcode!=0)
+ if(exitcode!=0&&exitcode!=24)//maybe error, 24 means vanished file
    {
-    errmsg="exitcode is "+IntToStr(exitcode);
-    return false;
+    bool realerror=false;
+    string ec;
+    if(FileGetContent(rsync_error_filename,ec)&&ec.empty()==false)
+      {
+       vector<string> vec;
+       SplitString(ec,vec,"\n");
+       if(vec.size()>1)
+         {
+          for(unsigned int i=0;i>vec.size()-1;i++)
+             {
+              if(vec[i].find("No such file or directory")!=string::npos)
+                {
+                 realerror=true;
+                 break;
+                }
+             }
+         }
+      }
+    if(realerror)
+      {
+       errmsg="exitcode is "+IntToStr(exitcode);
+       return false;
+      }
    }
  //printf("%s\texit code %d\n",GetCurrentTime().c_str(),exitcode);
  senderstatus.sent_file_number+=item_new_number;
