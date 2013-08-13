@@ -36,7 +36,9 @@ bool HTTPCommand::Do(string& result,COMMAND_FUNCTION http_command_function)
  else if((scmd==HTTP_COMMAND_SET_MASTER||
          scmd==HTTP_COMMAND_SET_SLAVE||
          scmd==HTTP_COMMAND_GET_STATE||
-         scmd==HTTP_COMMAND_GET_STATUS)
+         scmd==HTTP_COMMAND_GET_STATUS||
+         scmd==HTTP_COMMAND_SHOW_CONF||
+         scmd==HTTP_COMMAND_UPDATE_CONF)
          &&http_command_function!=NULL)
    {
     string res;

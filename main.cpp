@@ -786,6 +786,19 @@ bool HTTPCommandFunction(const string& command,string& res)
       }
     res=BuildHTMLResult(conf,my_state,ws,ss);
    }
+ //----------------------------------------------
+ else if(command==HTTP_COMMAND_SHOW_CONF)
+    res=conf.ToString();
+ else if(command==HTTP_COMMAND_UPDATE_CONF)
+   {
+    string errmsg;
+    string rs;
+    if(conf.LoadFromFile(my_argv[2],errmsg)==false)
+       res="error: "+errmsg;
+    else if(Notify(ROLE_WATCHER,UNIX_SOCKET_COMMAND_UPDATE_CONF,rs)==false||
+            Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_UPDATE_CONF,rs)==false)
+       res="error: failed update conf to watcher/sender";
+   }
  return true;
 }
 //-------------------------------------------------------------------------------------------------
@@ -837,6 +850,7 @@ int sender_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void*
 
 void SenderLoopRun()
 {
+ sender->SetUpdateMode(false);
  sender_loop_timer_id=aeCreateTimeEvent(main_el,SENDER_LOOP_TIME_INTERVAL_MS,
                                         sender_loop_timer_handler,NULL,NULL);
 }
@@ -890,9 +904,15 @@ bool UnixSocketCommandFunction(const string& command,string& res)
        res="error: send all "+errmsg;
     return true;
    }
- else if(command==UNIX_SOCKET_COMMAND_CHANGE_SENDER_MODE_TO_UPDATE)//when sender received update mode
+ else if(command==UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE)//when sender received update mode true
    {
     sender->SetUpdateMode(true);
+    res="ok";
+    return true;
+   }
+ else if (command==UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_FALSE)//when sender received update mode false
+   {
+    sender->SetUpdateMode(false);
     res="ok";
     return true;
    }
@@ -919,6 +939,15 @@ bool UnixSocketCommandFunction(const string& command,string& res)
     res="ok ";
     sender->senderstatus.Fresh();
     res+=sender->senderstatus.ToString();
+    return true;
+   }
+ else if(command==UNIX_SOCKET_COMMAND_UPDATE_CONF)
+   {
+    string errmsg;
+    if(conf.LoadFromFile(my_argv[2],errmsg)==false)
+       res="error "+errmsg;
+    else
+       res="ok";
     return true;
    }
  return true;
@@ -961,7 +990,7 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
    {
     string res;
     if(Notify(ROLE_WATCHER,UNIX_SOCKET_COMMAND_STOP_WATCHER,res)==true&&
-       Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_CHANGE_SENDER_MODE_TO_UPDATE,res)==true)
+       Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE,res)==true)
       {
        my_state=STATE_MASTER_TO_SLAVE2;
        printf("mystate=STATE_MASTER_TO_SLAVE2\n");

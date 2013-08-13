@@ -78,6 +78,10 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
    }
  string command="rsync "+RSYNC_PARAMS;
  command+=" --files-from="+conf.sender_tmp_path+RSYNC_LIST_FILE_NAME;
+ if(update_mode)
+    command+=" --update";
+ if(conf.rsync_bwlimit>0)
+    command+=" --bwlimit="+IntToStr(conf.rsync_bwlimit);
  command+=" "+conf.local_dir+" "+conf.remote_dir;
  printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  #ifdef MYDEBUG

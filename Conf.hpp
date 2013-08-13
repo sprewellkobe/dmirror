@@ -109,7 +109,16 @@ class Conf
       errmsg="failed to load item rsync_bwlimit";
       return false;
      }
-   rsync_bwlimit=atoi(s.c_str());
+   unsigned int an=1;
+   ToLower(s);
+   if(s.empty()==false&&(s[s.size()-1]=='m'||s[s.size()-1]=='k'))
+     {
+      an=1024;
+      if(s[s.size()-1]=='m')
+         an*=1024;
+      s.erase(s.size()-1);
+     }
+   rsync_bwlimit=atoi(s.c_str())*an;
    if(inip.Get("sender","rlog_reader_batch_item_number",s)==false)
      {
       errmsg="failed to load item rlog_reader_batch_item_number";
@@ -124,26 +133,32 @@ class Conf
    stat_file_path=s;
    return true;
   }//end LoadFromFile
+  string ToString()
+  {
+   string str;
+   str+="http_server_port:"+IntToStr(http_server_port)+"\n";
+   str+="mainbase_unix_socket_path:"+mainbase_unix_socket_path+"\n";
+   str+="remote_pair:"+remote_pair.host+":"+IntToStr(remote_pair.port)+"\n";
+   //--------------------------------------------
+   str+="watcher_unix_socket_path:"+watcher_unix_socket_path+"\n";
+   str+="local_dir:"+local_dir+"\n";
+   str+="rlog_path:"+rlog_path+"\n";
+   str+="rlog_file_max_size:"+IntToStr(rlog_file_max_size)+"\n";
+   str+="rlog_max_file_number:"+IntToStr(rlog_max_file_number)+"\n";
+   //--------------------------------------------
+   str+="sender_unix_socket_path:"+sender_unix_socket_path+"\n";
+   str+="sender_tmp_path:"+sender_tmp_path+"\n";
+   str+="remote_dir:"+remote_dir+"\n";
+   str+="rsync_bwlimit:"+IntToStr(rsync_bwlimit)+"\n";
+   str+="rlog_reader_batch_item_number:"+IntToStr(rlog_reader_batch_item_number)+"\n";
+   str+="stat_file_path:"+stat_file_path+"\n";
+   return str;
+  }
   void Display()
   {
-   cout<<"///------------------------------------"<<endl;
-   cout<<"http_server_port:"<<http_server_port<<endl;
-   cout<<"mainbase_unix_socket_path:"<<mainbase_unix_socket_path<<endl;
-   cout<<"remote_pair:"<<remote_pair.host.c_str()<<":"<<remote_pair.port<<endl;
-   //--------------------------------------------
-   cout<<"watcher_unix_socket_path:"<<watcher_unix_socket_path<<endl;
-   cout<<"local_dir:"<<local_dir<<endl;
-   cout<<"rlog_path:"<<rlog_path<<endl;
-   cout<<"rlog_file_max_size:"<<rlog_file_max_size<<endl;
-   cout<<"rlog_max_file_number:"<<rlog_max_file_number<<endl;
-   //--------------------------------------------
-   cout<<"sender_unix_socket_path:"<<sender_unix_socket_path<<endl;
-   cout<<"sender_tmp_path:"<<sender_tmp_path<<endl;
-   cout<<"remote_dir:"<<remote_dir<<endl;
-   cout<<"rsync_bwlimit:"<<rsync_bwlimit<<endl;
-   cout<<"rlog_reader_batch_item_number:"<<rlog_reader_batch_item_number<<endl;
-   cout<<"stat_file_path:"<<stat_file_path<<endl;
-   cout<<"///------------------------------------"<<endl;
+   cout<<"//------------------------------------"<<endl;
+   cout<<ToString()<<endl;
+   cout<<"//------------------------------------"<<endl;
   }
 };//end class conf
 //-------------------------------------------------------------------------------------------------

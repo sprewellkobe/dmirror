@@ -31,15 +31,19 @@ const static string HTTP_COMMAND_SET_MASTER="setmaster";
 const static string HTTP_COMMAND_SET_SLAVE="setslave";
 const static string HTTP_COMMAND_GET_STATE="getstate";
 const static string HTTP_COMMAND_GET_STATUS="getstatus";
+const static string HTTP_COMMAND_SHOW_CONF="showconf";
+const static string HTTP_COMMAND_UPDATE_CONF="updateconf";
 
 const static string UNIX_SOCKET_COMMAND_START_WATCHER="startwatcher";
 const static string UNIX_SOCKET_COMMAND_STOP_WATCHER="stopwatcher";
 const static string UNIX_SOCKET_COMMAND_START_SENDER1="startsender1";
 const static string UNIX_SOCKET_COMMAND_STOP_SENDER="stopsender";
-const static string UNIX_SOCKET_COMMAND_CHANGE_SENDER_MODE_TO_UPDATE="changesendermodetoupdate";
+const static string UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE="setsenderupdatemodetrue";
+const static string UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_FALSE="setsenderupdatemodefalse";
 const static string UNIX_SOCKET_COMMAND_GET_SENDER_LAST_READ_TIME="getlastreadtime";
 const static string UNIX_SOCKET_COMMAND_GET_WATCHER_STATUS="getwatcherstatus";
 const static string UNIX_SOCKET_COMMAND_GET_SENDER_STATUS="getsenderstatus";
+const static string UNIX_SOCKET_COMMAND_UPDATE_CONF="updateconf";
 
 const static string MAINBASE_UNIX_SOCKET_FILENAME="mainbase.socket";
 const static string WATCHER_UNIX_SOCKET_FILENAME="watcher.socket";

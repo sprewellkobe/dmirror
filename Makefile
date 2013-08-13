@@ -3,8 +3,8 @@
 OUTPUTFILES=dmirror
 CXXFLAGS=-I/usr/include/ -I./ -DMYDEBUG
 LIBS=-L/usr/lib64/libevent -lpthread -levent -lcurl
-CXX=g++ -g -Wall -O2 -fno-strict-aliasing #-DNDEBUG 
-CC=gcc -g -Wall -O2 -fno-strict-aliasing -DNDEBUG
+CXX=g++ -g -Wall -O2 -fno-strict-aliasing 
+CC=gcc -g -Wall -O2 -fno-strict-aliasing
 #---------------------------------------------------------------------------------------------
 
 all: $(OUTPUTFILES)
