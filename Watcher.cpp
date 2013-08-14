@@ -22,12 +22,12 @@ bool Watcher::Prepare(int& err)
  addwatch=true;
  struct timeval tv=BeginTiming();
  int dir_count=0;
- printf("%s\twatcher preparing...\n",GetCurrentTime().c_str());
+ kobe_printf("%s\twatcher preparing...\n",GetCurrentTime().c_str());
  if(VisitPath(conf.local_dir,dir_count,this)==false)
     return false;
  if(addwatch==false)
     return false;
- printf("%s\tprepare finished, dir_count:%d, time_cost: %.3f sec\n",
+ kobe_printf("%s\tprepare finished, dir_count:%d, time_cost: %.3f sec\n",
         GetCurrentTime().c_str(),dir_count,EndTiming(tv));
  return true;
 }
@@ -38,12 +38,12 @@ void Watcher::OnScanDir(const string& dirname)
  int ret=inotify_add_watch(inotify_fd,dirname.c_str(),INOTIFY_EVENTS);
  if(ret==-1)
    {
-    printf("%s\tERROR: inotify_add_watch failed %s,%d,%d\n",
+    kobe_printf("%s\tERROR: inotify_add_watch failed %s,%d,%d\n",
            GetCurrentTime().c_str(),dirname.c_str(),inotify_fd,errno);
     addwatch=false;
    }
  #ifdef MYDEBUG
- printf("%s\tadd new watch %s,%d,%d\n",GetCurrentTime().c_str(),
+ kobe_printf("%s\tadd new watch %s,%d,%d\n",GetCurrentTime().c_str(),
         dirname.c_str(),inotify_fd,ret);
  #endif
  watcherstatus.watch_wd_number++; 
@@ -61,7 +61,7 @@ bool Watcher::Start(aeEventLoop* main_el)
     inotify_fd=inotify_init();
     if(inotify_fd==-1)
       {
-       printf("%s\tERROR: failed to init inotify %d\n",GetCurrentTime().c_str(),errno);
+       kobe_printf("%s\tERROR: failed to init inotify %d\n",GetCurrentTime().c_str(),errno);
        return false;
       }
    }
@@ -115,19 +115,19 @@ bool Watcher::RemoveDir(const string& fullname)
  /*map<string,int>::iterator mi2=path2wd.find(fullname);
  if(mi2==path2wd.end())
    {
-    printf("%s\tERROR: RemoveDir failed cannot find %s\n",
+    kobe_printf("%s\tERROR: RemoveDir failed cannot find %s\n",
            GetCurrentTime().c_str(),fullname.c_str());
     return false;
    }
  int ret=inotify_rm_watch(inotify_fd,mi2->second);
  if(ret==-1)           
    {                   
-    printf("%s\tERROR: inotify_rm_watch %s failed %d,%d,%d\n",
+    kobe_printf("%s\tERROR: inotify_rm_watch %s failed %d,%d,%d\n",
            GetCurrentTime().c_str(),fullname.c_str(),errno,inotify_fd,mi2->second);
     return false;      
    }
  #ifdef MYDEBUG
- printf("%s\trm existed watch %s\n",GetCurrentTime().c_str(),fullname.c_str());
+ kobe_printf("%s\trm existed watch %s\n",GetCurrentTime().c_str(),fullname.c_str());
  #endif
  map<int,string>::iterator mi=wd2path.find(mi2->second);
  if(mi!=wd2path.end())
@@ -153,7 +153,7 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
  map<int,string>::iterator mi=wd2path.find(wd);
  if(mi==wd2path.end())
    {
-    printf("%s\tERROR: Doevent cannot find %d\n",GetCurrentTime().c_str(),wd);
+    kobe_printf("%s\tERROR: Doevent cannot find %d\n",GetCurrentTime().c_str(),wd);
     return false;
    }
  fullname=conf.local_dir+mi->second+fullname;
@@ -162,7 +162,7 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
        {
         case IN_CREATE:
              #ifdef MYDEBUG
-             printf("%s\tcreate %s,%d\n",
+             kobe_printf("%s\tcreate %s,%d\n",
                     GetCurrentTime().c_str(),fullname.c_str(),ievent->wd);
              #endif
              if(isdir&&AddDir(fullname)==false)
@@ -171,7 +171,7 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
              break;
         case IN_DELETE:
              #ifdef MYDEBUG
-             printf("%s\tdelete %s\n",GetCurrentTime().c_str(),fullname.c_str());
+             kobe_printf("%s\tdelete %s\n",GetCurrentTime().c_str(),fullname.c_str());
              #endif
              if(isdir&&RemoveDir(fullname)==false)
                 return false;
@@ -179,27 +179,27 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
              break;
         case IN_DELETE_SELF:
              #ifdef MYDEBUG
-             printf("%s\tdelete_self %s\n",GetCurrentTime().c_str(),fullname.c_str());
+             kobe_printf("%s\tdelete_self %s\n",GetCurrentTime().c_str(),fullname.c_str());
              #endif
              rlog->Write(IN_DELETE_SELF,fullname,err);
              break;
         case IN_CLOSE_WRITE:
         //case IN_MODIFY:
              #ifdef MYDEBUG
-             printf("%s\tmodified %s,%d\n",
+             kobe_printf("%s\tmodified %s,%d\n",
                     GetCurrentTime().c_str(),fullname.c_str(),ievent->wd);
              #endif
              rlog->Write(IN_CLOSE_WRITE,fullname,err);
              break;
         case IN_MOVE_SELF:
              #ifdef MYDEBUG
-             printf("%s\tmove_self %s\n",GetCurrentTime().c_str(),fullname.c_str());
+             kobe_printf("%s\tmove_self %s\n",GetCurrentTime().c_str(),fullname.c_str());
              #endif
              rlog->Write(IN_MOVE_SELF,fullname,err);
              break;
         case IN_MOVED_FROM:
              #ifdef MYDEBUG
-             printf("%s\tmoved_from %s\n",GetCurrentTime().c_str(),fullname.c_str());
+             kobe_printf("%s\tmoved_from %s\n",GetCurrentTime().c_str(),fullname.c_str());
              #endif
              if(isdir&&RemoveDir(fullname)==false)
                 return false;
@@ -207,7 +207,7 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
              break;
         case IN_MOVED_TO:
              #ifdef MYDEBUG
-             printf("%s\tmoved_to %s\n",GetCurrentTime().c_str(),fullname.c_str());
+             kobe_printf("%s\tmoved_to %s\n",GetCurrentTime().c_str(),fullname.c_str());
              #endif
              if(isdir&&AddDir(fullname))
                 return false;
@@ -215,7 +215,7 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
              break;
         default:
              #ifdef MYDEBUG
-             printf("%s\tunknown event_type\n",GetCurrentTime().c_str());
+             kobe_printf("%s\tunknown event_type\n",GetCurrentTime().c_str());
              #endif
              break;
        }//end switch

@@ -19,10 +19,10 @@ class UnixSocketCommand
   {return cmd.empty();}
   void Display()
   {
-   printf("%s\tunixsocket command=>%s\n",GetCurrentTime().c_str(),cmd.c_str());
+   kobe_printf("%s\tunixsocket command=>%s\n",GetCurrentTime().c_str(),cmd.c_str());
    for(unsigned int i=0;i<params.size();i++)
-       printf("%s\n",params[i].c_str());
-   printf("\n");
+       kobe_printf("%s\n",params[i].c_str());
+   kobe_printf("\n");
   }
  public:
   bool Do(string& result,COMMAND_FUNCTION unix_socket_command_function);

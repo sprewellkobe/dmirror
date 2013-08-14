@@ -13,7 +13,7 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
     {
      if(items[i].filename.size()<=conf.local_dir.size())
        {
-        printf("%s\tERROR: filename.size<=local_dir.size,%s\n",
+        kobe_printf("%s\tERROR: filename.size<=local_dir.size,%s\n",
                GetCurrentTime().c_str(),items[i].filename.c_str());
         continue;
        }
@@ -27,7 +27,7 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
                  if(FileExists(items[i].filename)==false)
                    {
                     #ifdef MYDEBUG
-                    printf("skip not exists %s\n",items[i].filename.c_str());
+                    kobe_printf("skip not exists %s\n",items[i].filename.c_str());
                     #endif
                     break;
                    }
@@ -46,7 +46,7 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
                  if(FileExists(rp)==false)
                    {
                     #ifdef MYDEBUG
-                    printf("skip not exists %s\n",rp.c_str());
+                    kobe_printf("skip not exists %s\n",rp.c_str());
                     #endif
                     break;
                    }
@@ -82,7 +82,7 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  if(content.empty())
    {
     #ifdef MYDEBUG
-    printf("%s\tskip empty rsync\n",GetCurrentTime().c_str());
+    kobe_printf("%s\tskip empty rsync\n",GetCurrentTime().c_str());
     #endif
     return true;
    }
@@ -95,9 +95,9 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
     command+=" --bwlimit="+IntToStr(conf.rsync_bwlimit);
  command+=" "+conf.local_dir+" "+conf.remote_dir;
  command+=" 2>"+rsync_error_filename;
- printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
+ kobe_printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  #ifdef MYDEBUG
- printf("%s\n",content.c_str());
+ kobe_printf("%s\n",content.c_str());
  #endif
  int status=system(command.c_str());
  if(status==-1)
@@ -129,7 +129,6 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
        return false;
       }
    }
- //printf("%s\texit code %d\n",GetCurrentTime().c_str(),exitcode);
  senderstatus.sent_file_number+=item_new_number;
  return true;
 }
@@ -139,7 +138,7 @@ bool Sender::SendAll(string& errmsg)
 {
  string command="rsync "+RSYNC_PARAMS;
  command+=" "+conf.local_dir+" "+conf.remote_dir;
- printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
+ kobe_printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  int status=system(command.c_str());
  if(status==-1)
    {
@@ -152,7 +151,7 @@ bool Sender::SendAll(string& errmsg)
     errmsg="exitcode is "+IntToStr(exitcode);
     return false;
    }
- printf("%s\texit code %d\n",GetCurrentTime().c_str(),exitcode);
+ kobe_printf("%s\texit code %d\n",GetCurrentTime().c_str(),exitcode);
  return true;
 }
 //-------------------------------------------------------------------------------------------------

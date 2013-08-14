@@ -25,11 +25,11 @@ class HTTPCommand
   {return cmd.empty();}
   void Display()
   {
-   printf("%s\thttp=>%s %s\n",GetCurrentTime().c_str(),cmd.c_str(),uri.c_str());
+   kobe_printf("%s\thttp=>%s %s\n",GetCurrentTime().c_str(),cmd.c_str(),uri.c_str());
    map<string,string>::iterator mi=headers.begin();
    for(;mi!=headers.end();mi++)
-       printf("%s => %s\n",mi->first.c_str(),mi->second.c_str());
-   printf("\n");
+       kobe_printf("%s => %s\n",mi->first.c_str(),mi->second.c_str());
+   kobe_printf("\n");
   }
   string ToStr()
   {return cmd+" "+uri;}

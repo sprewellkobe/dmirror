@@ -56,7 +56,7 @@ class SenderStat
       fclose(fp);
       fp=NULL;
      }
-   printf("%s\tsenderstat reset %s %lu\n",GetCurrentTime().c_str(),fn.c_str(),fl);
+   kobe_printf("%s\tsenderstat reset %s %lu\n",GetCurrentTime().c_str(),fn.c_str(),fl);
   }
   //---------------------------------------------
   bool Load()
@@ -70,7 +70,6 @@ class SenderStat
       return false;
    current_filename=items[0];
    offset=atol(items[1].c_str());
-   //printf("load senderstat %s:%lu\n",current_filename.c_str(),offset);
    return true;
   }
   //---------------------------------------------
@@ -79,7 +78,7 @@ class SenderStat
    if(cf.empty()==false&&current_filename.empty()==false&&
       cf!=current_filename)
      {
-      printf("%s\t%s done,unlinked\n",GetCurrentTime().c_str(),
+      kobe_printf("%s\t%s done,unlinked\n",GetCurrentTime().c_str(),
              current_filename.c_str());
       unlink(current_filename.c_str());//read rotate
      }
@@ -92,7 +91,6 @@ class SenderStat
    fseek(fp,0,SEEK_SET);
    fprintf(fp,"%s\t%lu",current_filename.c_str(),offset);
    fflush(fp);
-   //printf("save senderstat %s:%lu\n",current_filename.c_str(),offset);
    return true;
   }
 };//end class SenderStat
@@ -133,16 +131,13 @@ class Rlog
   //---------------------------------------------
   FILE* FindProperFileToRead(const SenderStat& ss)
   {
-   //printf("ss.current_filename:%s,%d,%d\n",
-   //        ss.current_filename.c_str(),ss.offset,GetFileSize(ss.current_filename));
-
    if(ss.current_filename.empty()==false&&ss.offset<GetFileSize(ss.current_filename))
      {
       current_filename=ss.current_filename;
       fp=fopen(ss.current_filename.c_str(),"r");
       fseek(fp,ss.offset,SEEK_SET);
-      printf("%s\tcontinue read from %s\n",GetCurrentTime().c_str(),
-             ss.current_filename.c_str());
+      kobe_printf("%s\tcontinue read from %s\n",GetCurrentTime().c_str(),
+                  ss.current_filename.c_str());
       return fp;
      }
    //new file
@@ -165,7 +160,7 @@ class Rlog
       return NULL;
    current_filename=helpers[i].filefullname;
    fp=fopen(current_filename.c_str(),"r");
-   printf("%s\tfirst read from %s\n",GetCurrentTime().c_str(),
+   kobe_printf("%s\tfirst read from %s\n",GetCurrentTime().c_str(),
           current_filename.c_str());
    return fp;
   }
@@ -188,18 +183,18 @@ class Rlog
       string filename=conf.rlog_path+s1+"_"+string(s2)+RLOG_SURFIX;
       fp=fopen(filename.c_str(),"a");
       if(fp==NULL)
-         printf("%s\tERROR: failed to open %s,%d\n",
-                GetCurrentTime().c_str(),filename.c_str(),errno);
+         kobe_printf("%s\tERROR: failed to open %s,%d\n",
+                     GetCurrentTime().c_str(),filename.c_str(),errno);
       else
         {
          current_filename=filename;
-         printf("%s\tfirst write to %s\n",GetCurrentTime().c_str(),
-                current_filename.c_str());
+         kobe_printf("%s\tfirst write to %s\n",GetCurrentTime().c_str(),
+                     current_filename.c_str());
          if(helpers.size()+1>=(unsigned int)(conf.rlog_max_file_number))
            {
             unlink(helpers.front().filefullname.c_str());//rotate
-            printf("%s\tWARNING: rlog so full that unlink %s to rotate, maybe some update lost!\n",
-                   GetCurrentTime().c_str(),helpers.front().filefullname.c_str());
+            kobe_printf("%s\tWARNING: rlog so full that unlink %s to rotate, maybe some update lost!\n",
+                        GetCurrentTime().c_str(),helpers.front().filefullname.c_str());
             danger=true;
            }
         }
@@ -208,11 +203,11 @@ class Rlog
    current_filename=helpers.back().filefullname;
    fp=fopen(current_filename.c_str(),"a");
    if(fp==NULL)
-      printf("%s\tERROR: failed to open %s,%d\n",
-             GetCurrentTime().c_str(),current_filename.c_str(),errno);
+      kobe_printf("%s\tERROR: failed to open %s,%d\n",
+                  GetCurrentTime().c_str(),current_filename.c_str(),errno);
    else
-      printf("%s\tcontinue write to %s\n",GetCurrentTime().c_str(),
-             current_filename.c_str());
+      kobe_printf("%s\tcontinue write to %s\n",GetCurrentTime().c_str(),
+                  current_filename.c_str());
    return fp;
   }
   //---------------------------------------------
@@ -249,7 +244,7 @@ class Rlog
          SplitString(buffer,tokens,"\t\n");
          if(tokens.size()!=3)
            {
-            printf("%s\tERROR: wrong format %s\n",GetCurrentTime().c_str(),buffer);
+            kobe_printf("%s\tERROR: wrong format %s\n",GetCurrentTime().c_str(),buffer);
             continue;
            }
          RlogItem ri;
@@ -271,7 +266,7 @@ class Rlog
    if(fp==NULL)
      {
       err=-1;
-      printf("no file to write\n");
+      kobe_printf("no file to write\n");
       return false;
      }
    int rv=fprintf(fp,"%s\t%s\t%s\n",GetCurrentTime().c_str(),
@@ -287,8 +282,8 @@ class Rlog
      {
       fclose(fp);
       fp=NULL;
-      printf("%s\tclosed full file %s\n",
-             GetCurrentTime().c_str(),current_filename.c_str());
+      kobe_printf("%s\tclosed full file %s\n",
+                  GetCurrentTime().c_str(),current_filename.c_str());
      }
    return true;
   }
