@@ -28,6 +28,13 @@ class SenderStat
   {
    filename=c.stat_file_path+STAT_FILE_NAME;
   }
+  ~SenderStat()
+  {
+   if(fp!=NULL)
+      fclose(fp);
+  }
+  void UpdateConf(const Conf& c)
+  {conf=c;}
  private:
   SenderStat(const SenderStat& ss)
   {}
@@ -118,6 +125,8 @@ class Rlog
                       current_file_readed_offset(0),current_file_wrotten_offset(0),
                       last_read_time(time(NULL)),danger(false)
   {}
+  void UpdateConf(const Conf& c)
+  {conf=c;}
  private:
   Rlog(const Rlog& r){}
  private:

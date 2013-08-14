@@ -87,6 +87,7 @@ class WatcherStatus
   }
 };//end class WatcherStatus
 //-------------------------------------------------------------------------------------------------
+
 class Watcher
 {
  public:
@@ -111,6 +112,7 @@ class Watcher
       delete rlog;
    rlog=NULL;
   }
+  
  private:
   Watcher(const Watcher& w){}
  public:

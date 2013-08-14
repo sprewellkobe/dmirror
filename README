@@ -1,0 +1,16 @@
+# What is DMirror
+- DMirror is a real-time directory sync tool, used for local and remote file sync. 
+
+# How to use
+  - 1, start master, ./dmirror mainbase dmirror1.ini
+  - 2, start slave, ./dmirror mainbase dmirror2.ini
+  - 3, set local dir and remote dir
+  - 4, curl "http://your_master_ip:your_master_port/setmaster"
+
+# Supported HTTP command
+  - setmaster
+  - setslave
+  - getstate
+  - getstatus(HTML)
+  - showconf
+  - updateconf

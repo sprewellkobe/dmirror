@@ -15,7 +15,7 @@ bool Watcher::Prepare(int& err)
     inotify_fd=inotify_init();
     if(inotify_fd==-1)
       {
-       printf("%s\tERROR: failed to init inotify %d\n",GetCurrentTime().c_str(),errno);
+       kobe_printf("%s\tERROR: failed to init inotify %d\n",GetCurrentTime().c_str(),errno);
        return false;
       }
    }

@@ -68,6 +68,7 @@ class SenderStatus
   }
 };//end class SenderStatus
 //-------------------------------------------------------------------------------------------------
+
 class Sender
 {
  public:
@@ -91,6 +92,14 @@ class Sender
    if(senderstat!=NULL)
       delete senderstat;
    senderstat=NULL;
+  }
+  void UpdateConf(const Conf& c)
+  {
+   conf=c;
+   if(rlog!=NULL)
+      rlog->UpdateConf(c);
+   if(senderstat!=NULL)
+      senderstat->UpdateConf(c);
   }
  private:
   Sender(const Sender& s){}

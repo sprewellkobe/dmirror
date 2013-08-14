@@ -70,4 +70,12 @@ const static string RSYNC_PARAMS="-r --delete --delete-after --ignore-errors";
 const static string RSYNC_LIST_FILE_NAME="sender_rsync.list";
 const static string RSYNC_ERROR_FILE_NAME="sender_rsync.error";
 //-------------------------------------------------------------------------------------------------
+const static string MAINBASE_LOG_FILE_NAME="mainbase.";
+const static string WATCHER_LOG_FILE_NAME="watcher.";
+const static string SENDER_LOG_FILE_NAME="sender.";
+const static string LOG_SURFIX=".log";
+const static int LOG_FILE_MAX_SIZE=256*1024*1024;
+//-------------------------------------------------------------------------------------------------
+void kobe_printf(const char* format,...);
+//-------------------------------------------------------------------------------------------------
 #endif

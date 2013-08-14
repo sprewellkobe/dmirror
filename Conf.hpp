@@ -24,10 +24,14 @@ class Conf
   unsigned int rsync_bwlimit;
   int rlog_reader_batch_item_number;
   string stat_file_path;
+ public://log
+  bool log_switch;
+  string log_path;
  public:
   Conf():http_server_port(0),
          rlog_file_max_size(0),rlog_max_file_number(0),
-         rsync_bwlimit(0),rlog_reader_batch_item_number(0)
+         rsync_bwlimit(0),rlog_reader_batch_item_number(0),
+         log_switch(false)
   {}
  public:
   bool LoadFromFile(const string& filename,string& errmsg)
@@ -131,6 +135,18 @@ class Conf
       return false;
      }
    stat_file_path=s;
+   if(inip.Get("log","log_switch",s)==false)
+     {
+      errmsg="failed to load item log_switch";
+      return false;
+     }
+   log_switch=s=="on";
+   if(inip.Get("log","log_path",s)==false)
+     {
+      errmsg="failed to load item log_path";
+      return false;
+     }
+   log_path=s;
    return true;
   }//end LoadFromFile
   string ToString()
@@ -152,6 +168,9 @@ class Conf
    str+="rsync_bwlimit:"+IntToStr(rsync_bwlimit)+"\n";
    str+="rlog_reader_batch_item_number:"+IntToStr(rlog_reader_batch_item_number)+"\n";
    str+="stat_file_path:"+stat_file_path+"\n";
+   //--------------------------------------------
+   str+="log_switch:"+IntToStr(int(log_switch))+"\n";
+   str+="log_path:"+log_path+"\n";
    return str;
   }
   void Display()

@@ -1,7 +1,8 @@
 #updated by kobe, 2007,4,25
 #---------------------------------------------------------------------------------------------
 OUTPUTFILES=dmirror
-CXXFLAGS=-I/usr/include/ -I./ -DMYDEBUG
+BUILDVERSION=$(shell date +%Y%m%d)
+CXXFLAGS=-I/usr/include/ -I./ -DMYDEBUG -DBUILDVERSION=$(BUILDVERSION)
 LIBS=-L/usr/lib64/libevent -lpthread -lcurl
 CXX=g++ -g -Wall -O2 -fno-strict-aliasing 
 CC=gcc -g -Wall -O2 -fno-strict-aliasing

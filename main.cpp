@@ -102,26 +102,72 @@ class SocketReceiver
 
 void DisplayUsage(bool rv=false)
 {
- cout<<EXENAME<<" mainbase ini_filename"<<endl;
+ cout<<"USAGE"<<endl;
+ cout<<"    "<<EXENAME<<" mainbase ini_filename"<<endl;
  cout<<"AUTHORS"<<endl;
  cout<<"    kobe 20130724"<<endl;
+ #ifdef BUILDVERSION
+ cout<<"BUILDVERSION"<<endl;
+ cout<<"    "<<BUILDVERSION<<endl;
+ #endif
  if(rv) exit(0);
 }
 //-------------------------------------------------------------------------------------------------
 
-static char logbuffer[1024];
+static FILE* mainbase_log_fp=NULL;
+static FILE* watcher_log_fp=NULL;
+static FILE* sender_log_fp=NULL;
 void kobe_printf(const char* format,...)//worker log wrapper
 {
  va_list args;
  va_start(args,format);
-/* if(workerlog.OK())
+ if(conf.log_switch==true)
    {
-    vsnprintf(logbuffer,1024,format,args);
-    logbuffer[1023]=0;
+    FILE* fp=NULL;
+    switch(my_role)
+          {
+           case ROLE_MAINBASE:
+                if(mainbase_log_fp==NULL)
+                  {
+                   string fn=conf.log_path+MAINBASE_LOG_FILE_NAME+GetCurrentTime()+LOG_SURFIX;
+                   mainbase_log_fp=fopen(fn.c_str(),"w");
+                  }
+                fp=mainbase_log_fp;
+                break;
+           case ROLE_WATCHER:
+                if(watcher_log_fp==NULL)
+                  {
+                   string fn=conf.log_path+WATCHER_LOG_FILE_NAME+GetCurrentTime()+LOG_SURFIX;
+                   watcher_log_fp=fopen(fn.c_str(),"w");
+                  }
+                fp=watcher_log_fp;
+                break;
+           case ROLE_SENDER:
+                if(sender_log_fp==NULL)
+                  {
+                   string fn=conf.log_path+SENDER_LOG_FILE_NAME+GetCurrentTime()+LOG_SURFIX;
+                   sender_log_fp=fopen(fn.c_str(),"w");
+                  }
+                fp=sender_log_fp;
+                break;
+           default:
+                break;
+          }//end switch
+    if(fp!=NULL)
+       vfprintf(fp,format,args);
     va_end(args);
-    workerlog.WriteLog(WORKERLOG_PREFIX,logbuffer);
+    if(fp!=NULL&&ftell(fp)>LOG_FILE_MAX_SIZE)
+      {
+       fclose(fp);
+       if(my_role==ROLE_MAINBASE)
+          mainbase_log_fp=NULL;
+       else if(my_role==ROLE_WATCHER)
+          watcher_log_fp=NULL;
+       else
+          sender_log_fp=NULL;
+      }
    }
- else*/
+ else
    {
     vprintf(format,args);
     va_end(args);
@@ -313,7 +359,7 @@ void HTTPServerRun()
  struct sockaddr_in server_address;
  if((http_server_fd=socket(AF_INET,SOCK_STREAM,0))<0)
    {
-    printf("ERROR: create socket error!\n");
+    kobe_printf("%s\tERROR: create socket error %d\n",GetCurrentTime().c_str(),errno);
     exit(1);
    }
  int reuseaddr=1;
@@ -324,20 +370,21 @@ void HTTPServerRun()
  server_address.sin_addr.s_addr=htons(INADDR_ANY);
  if(bind(http_server_fd,(struct sockaddr*)&server_address,sizeof(server_address))<0)
    {
-    printf("ERROR: failed to bind port %d,%d\n",conf.http_server_port,errno);
+    kobe_printf("%s\tERROR: failed to bind port %d,%d\n",GetCurrentTime().c_str(),
+                conf.http_server_port,errno);
     exit(1);
    }
  if(listen(http_server_fd,LISTEN_QUEUE_LENGTH)<0)
    {
-    printf("ERROR: failed to call listen %d\n",errno);
+    kobe_printf("%s\tERROR: failed to call listen %d\n",GetCurrentTime().c_str(),errno);
     exit(1);
    }
  if(SetNBSocket(http_server_fd)==false)
    {
-    printf("ERROR: failed to set noblock socket\n");
+    kobe_printf("%s\tERROR: failed to set noblock socket %d\n",GetCurrentTime().c_str(),errno);
     exit(1);
    }
- printf("%s\tlistening on port:%d ......\n",GetCurrentTime().c_str(),conf.http_server_port);
+ kobe_printf("%s\tlistening on port:%d ......\n",GetCurrentTime().c_str(),conf.http_server_port);
  aeCreateFileEvent(main_el,http_server_fd,AE_READABLE,http_server_accept_handler,NULL);
 }
 //-------------------------------------------------------------------------------------------------
@@ -460,27 +507,13 @@ void UnixSocketServerRun()
  unix_socket_server_fd=CreateServerUnixSocket(filename);
  if(unix_socket_server_fd==0)
    {
-    printf("%s\tERROR: failed to create unix socket %s,%d\n",
-           GetCurrentTime().c_str(),filename.c_str(),errno);
+    kobe_printf("%s\tERROR: failed to create unix socket %s,%d\n",
+                GetCurrentTime().c_str(),filename.c_str(),errno);
     exit(-1);
    }
-  printf("%s\tlistening on unix_socket:%s ......\n",GetCurrentTime().c_str(),filename.c_str());
+  kobe_printf("%s\tlistening on unix_socket:%s ......\n",GetCurrentTime().c_str(),filename.c_str());
   aeCreateFileEvent(main_el,unix_socket_server_fd,AE_READABLE,unix_socket_server_accept_handler,NULL);
 }
-//-------------------------------------------------------------------------------------------------
-/*
-int watcher_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void* clientData)
-{
- return 0;
-}
-//-------------------------------------------------------------------------------------------------
-
-void WatcherLoopRun()
-{
- watcher_loop_timer_id=aeCreateTimeEvent(main_el,WATCHER_LOOP_TIME_INTERVAL_MS,
-                                         watcher_loop_timer_handler,NULL,NULL);
-}
-*/
 //-------------------------------------------------------------------------------------------------
 
 void WatcherRun()
@@ -497,7 +530,8 @@ void WatcherRun()
  string errmsg;
  if(conf.LoadFromFile(my_argv[2],errmsg)==false)
    {
-    printf("ERROR: failed to load conf,%s\n",errmsg.c_str());
+    kobe_printf("%s\tERROR: failed to load conf,%s\n",
+                GetCurrentTime().c_str(),errmsg.c_str());
     exit(-3);
    }
  watcher=new Watcher(conf);
@@ -505,14 +539,14 @@ void WatcherRun()
  main_el=aeCreateEventLoop();
  if(main_el==NULL)
    {
-    kobe_printf("ERROR: failed to create event loop\n");
+    kobe_printf("%s\tERROR: failed to create event loop\n",GetCurrentTime().c_str());
     exit(-1);
    }
  //----------------------------------------------
  UnixSocketServerRun();
  //----------------------------------------------
  aeMain(main_el);
- kobe_printf("watcher exit\n");
+ kobe_printf("%s\twatcher exit\n",GetCurrentTime().c_str());
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -525,17 +559,17 @@ void StartWatcher(int argc,char* argv[])
     sprintf(argv[1],"watcher");
     my_role=ROLE_WATCHER;
     WatcherRun();
-    kobe_printf("watcher exit\n");
+    kobe_printf("%s\twatcher exit\n",GetCurrentTime().c_str());
     exit(1);
    }
  else if(rv==-1)
    {
-    printf("ERROR: failed to create watcher\n");
+    kobe_printf("%s\tERROR: failed to create watcher\n",GetCurrentTime().c_str());
     exit(-2);
    }
  else
    {
-    printf("%s\tstart watcher process ok\n",GetCurrentTime().c_str());
+    kobe_printf("%s\tstart watcher process ok\n",GetCurrentTime().c_str());
     processbase.watcher_pid=rv;
    }
 }
@@ -554,7 +588,8 @@ void SenderRun()
  string errmsg;
  if(conf.LoadFromFile(my_argv[2],errmsg)==false)
    { 
-    printf("ERROR: failed to load conf,%s\n",errmsg.c_str());
+    kobe_printf("%s\tERROR: failed to load conf,%s\n",GetCurrentTime().c_str(),
+                errmsg.c_str());
     exit(-3);
    }
  //----------------------------------------------
@@ -562,7 +597,8 @@ void SenderRun()
  main_el=aeCreateEventLoop();
  if(main_el==NULL)
    {
-    kobe_printf("ERROR: failed to create event loop\n");
+    kobe_printf("%s\tERROR: failed to create event loop\n",
+                GetCurrentTime().c_str());
     exit(-1);
    }
  //----------------------------------------------
@@ -587,12 +623,12 @@ void StartSender(int argc,char* argv[])
    }
  else if(rv==-1)
    {
-    printf("ERROR: failed to create sender\n");
+    kobe_printf("%s\tERROR: failed to create sender\n",GetCurrentTime().c_str());
     exit(-2);
    }
  else
    {
-    printf("%s\tstart sender process ok\n",GetCurrentTime().c_str());
+    kobe_printf("%s\tstart sender process ok\n",GetCurrentTime().c_str());
     processbase.sender_pid=rv;
    }
 }
@@ -627,7 +663,6 @@ void ProcessMonitorRun()
 
 void mytest(int argc,char* argv[])//for kobetest
 {
- int err;
  string errmsg;
  if(conf.LoadFromFile(argv[2],errmsg)==false)
     printf("ERROR: failed to load conf,%s\n",errmsg.c_str());
@@ -647,6 +682,7 @@ void mytest(int argc,char* argv[])//for kobetest
       }
  */
  /*
+ int err=0;
  Rlog rlog(conf);
  SenderStat ss(conf);
  ss.Reset();
@@ -836,7 +872,7 @@ int sender_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void*
          {
           if(err==-1)
             {
-             printf("%s\tno more to read %s:%lu\n",GetCurrentTime().c_str(),
+             kobe_printf("%s\tno more to read %s:%lu\n",GetCurrentTime().c_str(),
                     sender->senderstat->current_filename.c_str(),
                     sender->senderstat->offset);
              return SENDER_LOOP_TIME_INTERVAL_MS;
@@ -997,7 +1033,8 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
          }
       }
     else
-       printf("wait for slave ok %s\n",result.c_str());
+       kobe_printf("%s\twait for slave ok %s\n",GetCurrentTime().c_str(),
+                   result.c_str());
    }//end if my_state==STATE_TO_MASTER_WAIT_SLAVE_OK
  else if(my_state==STATE_MASTER_TO_SLAVE1)
    {
@@ -1057,7 +1094,8 @@ int main(int argc,char* argv[])
  string errmsg;
  if(conf.LoadFromFile(argv[2],errmsg)==false)
    {
-    printf("ERROR: failed to load conf,%s\n",errmsg.c_str());
+    kobe_printf("%s\tERROR: failed to load conf,%s\n",GetCurrentTime().c_str(),
+                errmsg.c_str());
     return -3;
    }
  conf.Display();
@@ -1065,7 +1103,8 @@ int main(int argc,char* argv[])
  main_el=aeCreateEventLoop();
  if(main_el==NULL)
    {
-    kobe_printf("ERROR: failed to create event loop\n");
+    kobe_printf("%s\tERROR: failed to create event loop\n",
+                GetCurrentTime().c_str());
     return -1;
    }
  //----------------------------------------------
