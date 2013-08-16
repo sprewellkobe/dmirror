@@ -534,7 +534,6 @@ void WatcherRun()
                 GetCurrentTime().c_str(),errmsg.c_str());
     exit(-3);
    }
- watcher=new Watcher(conf);
  //----------------------------------------------
  main_el=aeCreateEventLoop();
  if(main_el==NULL)
@@ -542,6 +541,8 @@ void WatcherRun()
     kobe_printf("%s\tERROR: failed to create event loop\n",GetCurrentTime().c_str());
     exit(-1);
    }
+ //----------------------------------------------
+ watcher=new Watcher(conf,main_el);
  //----------------------------------------------
  UnixSocketServerRun();
  //----------------------------------------------

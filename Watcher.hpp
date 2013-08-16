@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <deque>
 #include <sys/inotify.h>
 #include "ae.h"
 #include "Maindef.hpp"
@@ -14,7 +15,7 @@ using namespace std;
 //-------------------------------------------------------------------------------------------------
 
 const static uint32_t INOTIFY_EVENTS=IN_CREATE|IN_DELETE|
-                                     IN_DELETE_SELF|
+                                     //IN_DELETE_SELF|
                                      //IN_MODIFY|
                                      IN_CLOSE_WRITE|
                                      IN_MOVE_SELF|
@@ -92,31 +93,51 @@ class Watcher
 {
  public:
   Conf conf;
+  aeEventLoop* main_el;
   int inotify_fd;
-  bool addwatch;
+  bool addwatch; 
+  deque<string> watch_dir_list;
+  int pipe_pair[2];
+  struct timeval watch_init_tv;
+  unsigned int watch_dir_count; 
+ public:
   Rlog* rlog;
   WatcherStatus watcherstatus;
  public:
   map<int,string> wd2path;
   map<string,int> path2wd;
  public:
-  Watcher(const Conf& c):conf(c),inotify_fd(0),
-                         addwatch(true),rlog(NULL)
+  Watcher(const Conf& c,aeEventLoop* me):
+                         conf(c),main_el(me),inotify_fd(0),
+                         addwatch(true),
+                         watch_dir_count(0),
+                         rlog(NULL)
   {
+   pipe_pair[0]=0;
+   pipe_pair[1]=0;
    rlog=new Rlog(conf);
    watcherstatus.rlog=rlog;
   }
   ~Watcher()
   {
+   if(pipe_pair[0]!=0)
+     {
+      close(pipe_pair[0]);
+      pipe_pair[0]=0;
+     }
+   if(pipe_pair[1]!=0)
+     {
+      close(pipe_pair[1]);
+      pipe_pair[1]=0;
+     }
    if(rlog!=NULL)
       delete rlog;
    rlog=NULL;
   }
-  
  private:
   Watcher(const Watcher& w){}
  public:
- public:
+  void OnPipeRead();
   bool Prepare(int& err);
   bool Start(aeEventLoop* main_el);
   bool Stop(aeEventLoop* main_el);

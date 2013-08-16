@@ -1,4 +1,67 @@
+#include <dirent.h>
 #include "Watcher.hpp"
+//-------------------------------------------------------------------------------------------------
+
+void pipe_read_handler(aeEventLoop* el,int fd,void* arg,int mask)
+{
+ Watcher* watcher=(Watcher*)arg;
+ char c;
+ int rv=read(fd,&c,1);
+ if(rv!=1)
+    return;
+ watcher->OnPipeRead();
+}
+//-------------------------------------------------------------------------------------------------
+
+void Watcher::OnPipeRead()
+{
+ if(watch_dir_list.empty()==true)
+    return;
+ const string& path=watch_dir_list.front();
+ if(path.empty()==false&&path[path.size()-1]=='/')
+    OnScanDir(path);
+ else
+    OnScanDir(path+"/");
+ watch_dir_count++;
+ struct dirent** list=NULL;
+ int ne=scandir(path.c_str(),&list,NULL,NULL);
+ if(ne<0)
+    return;
+ for(int i=0;i<ne;i++)
+    {
+     if(strcmp(list[i]->d_name,".")==0||
+        strcmp(list[i]->d_name,"..")==0)
+       {
+        free(list[i]);
+        list[i]=NULL;
+        continue;
+       }
+     if(list[i]->d_type==DT_DIR)
+       {
+        static char buf[4096];
+        if(path[path.size()-1]!='/')
+           snprintf(buf,4095,"%s/%s",path.c_str(),list[i]->d_name);
+        else
+           snprintf(buf,4095,"%s%s",path.c_str(),list[i]->d_name);
+        watch_dir_list.push_back(buf);
+        write(pipe_pair[1],"x",1);
+       }
+     free(list[i]);
+     list[i]=NULL;
+    }//end for i
+ free(list);
+ watch_dir_list.pop_front();
+ if(watch_dir_list.empty())
+   {
+    kobe_printf("%s\tprepare finished(%d), dir_count:%d, time_cost: %.3f sec\n",
+                 GetCurrentTime().c_str(),int(addwatch),watch_dir_count,EndTiming(watch_init_tv));
+    aeDeleteFileEvent(main_el,pipe_pair[0],AE_READABLE);
+    close(pipe_pair[0]);
+    close(pipe_pair[1]);
+    pipe_pair[0]=0;
+    pipe_pair[1]=0;
+   }   
+}
 //-------------------------------------------------------------------------------------------------
 
 bool Watcher::Prepare(int& err)
@@ -20,15 +83,34 @@ bool Watcher::Prepare(int& err)
       }
    }
  addwatch=true;
- struct timeval tv=BeginTiming();
- int dir_count=0;
+ watch_init_tv=BeginTiming();
+ watch_dir_count=0;
+ watch_dir_list.clear();
+ if(pipe(pipe_pair)!=0)
+   {
+    err=errno;
+    return false;
+   }
+
+ int rv=aeCreateFileEvent(main_el,pipe_pair[0],AE_READABLE,pipe_read_handler,this);
+ if(rv<0)
+   {
+    kobe_printf("%s\tERROR: failed to create pipe file event [%d]\n",
+                GetCurrentTime().c_str(),rv);
+    return false;
+   }
+
+ watch_dir_list.push_back(conf.local_dir);
+ write(pipe_pair[1],"x",1);
  kobe_printf("%s\twatcher preparing...\n",GetCurrentTime().c_str());
+ /*
  if(VisitPath(conf.local_dir,dir_count,this)==false)
     return false;
  if(addwatch==false)
     return false;
  kobe_printf("%s\tprepare finished, dir_count:%d, time_cost: %.3f sec\n",
         GetCurrentTime().c_str(),dir_count,EndTiming(tv));
+ */
  return true;
 }
 //-------------------------------------------------------------------------------------------------
