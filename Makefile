@@ -3,7 +3,7 @@
 OUTPUTFILES=dmirror
 BUILDVERSION=$(shell date +%Y%m%d)
 CXXFLAGS=-I/usr/include/ -I./ -DMYDEBUG -DBUILDVERSION=$(BUILDVERSION)
-LIBS=-L/usr/lib64/libevent -lpthread -lcurl
+LIBS=-lpthread -lcurl
 CXX=g++ -g -Wall -O2 -fno-strict-aliasing 
 CC=gcc -g -Wall -O2 -fno-strict-aliasing
 #---------------------------------------------------------------------------------------------

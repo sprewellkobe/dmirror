@@ -97,7 +97,10 @@ bool UnixSocketBlockSend(int fd,const char* buffer,unsigned int total_size);
 string StateToString(int state);
 string BuildHTMLResult(const Conf& conf,int state,
                        const WatcherStatus& ws,const SenderStatus& ss);
-void CoveredFileFilter(vector<string>& items);
+void CoveredIncludeFileFilter(vector<string>& include_items);
+void RecheckExcludeFiles(const string& filename,vector<string>& exclude_items);
+bool AddExcludeFiles(const string& path,const string& filefullname,
+                     const set<string>& iset,vector<string>& files);
 //-------------------------------------------------------------------------------------------------
 
 class AddrPair

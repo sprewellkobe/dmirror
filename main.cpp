@@ -719,11 +719,19 @@ void mytest(int argc,char* argv[])//for kobetest
       }//end while
  */
  //----------------------------------------------
- string content;
+ /*string content;
  FileGetContent("dirfilter.txt",content);
  vector<string> items;
  SplitString(content,items,"\n");
  CoveredFileFilter(items);
+ for(unsigned int i=0;i<items.size();i++)
+     cout<<items[i]<<endl;*/
+ vector<string> items;
+ set<string> iset;
+ iset.insert("/home/conglei/saegit/dmirror/test/1/2/c/d.txt");
+ AddExcludeFiles("/home/conglei/saegit/dmirror/",
+                 "/home/conglei/saegit/dmirror/main.cpp",iset,items);
+ RecheckExcludeFiles("/home/conglei/saegit/dmirror/ae.cpp",items);
  for(unsigned int i=0;i<items.size();i++)
      cout<<items[i]<<endl;
  //----------------------------------------------

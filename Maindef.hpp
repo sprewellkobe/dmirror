@@ -68,6 +68,7 @@ const static int RLOG_BATCH_PROCESS_TIMEOUT=2;
 const static string STAT_FILE_NAME="stat.dat";
 const static string RSYNC_PARAMS="-r --delete --delete-after --ignore-errors";
 const static string RSYNC_LIST_FILE_NAME="sender_rsync.list";
+const static string RSYNC_EXCLUDE_FILE_NAME="sender_rsync_exclude.list";
 const static string RSYNC_ERROR_FILE_NAME="sender_rsync.error";
 //-------------------------------------------------------------------------------------------------
 const static string MAINBASE_LOG_FILE_NAME="mainbase.";

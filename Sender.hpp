@@ -104,7 +104,8 @@ class Sender
  private:
   Sender(const Sender& s){}
   bool MakeRsyncFileList(const vector<RlogItem>& items,
-                         string& content,int& item_new_number);
+                         string& include_content,string& exclude_content,
+                         int& include_item_number,int& exclude_item_number);
  public:
   void SetUpdateMode(bool c)
   {update_mode=c;}

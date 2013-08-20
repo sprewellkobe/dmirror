@@ -524,7 +524,7 @@ string BuildHTMLResult(const Conf& conf,int state,
 }
 //-------------------------------------------------------------------------------------------------
 
-void CoveredFileFilter(vector<string>& items)
+void CoveredIncludeFileFilter(vector<string>& items)
 {
  int k=0;
  vector<string> dirlist;
@@ -593,5 +593,109 @@ void CoveredFileFilter(vector<string>& items)
  for(;ii<items.size();ii++)
         tmpitems.push_back(items[ii]);
  items=tmpitems;
+}
+//-------------------------------------------------------------------------------------------------
+
+void RecheckExcludeFiles(const string& filename,vector<string>& exclude_items)
+{
+ if(filename[filename.size()-1]=='/')
+   {
+    pair<vector<string>::iterator,vector<string>::iterator> range;
+    range=equal_range(exclude_items.begin(),exclude_items.end(),filename);
+    vector<string>::iterator vi=range.second;
+    for(;vi!=exclude_items.end();)
+       {
+        const string& es=*vi;
+        if(es.size()<filename.size())
+           break;
+        if(strncmp(es.c_str(),filename.c_str(),filename.size())!=0)
+           break;
+        vi=exclude_items.erase(vi);
+       }
+   }
+ else
+   {
+    pair<vector<string>::iterator,vector<string>::iterator> range;
+    range=equal_range(exclude_items.begin(),exclude_items.end(),filename);
+    if(range.first!=range.second)
+       exclude_items.erase(range.first,range.second);
+   }
+}
+//-------------------------------------------------------------------------------------------------
+
+bool AddExcludeFiles(const string& path,const string& filefullname,
+                     const set<string>& iset,vector<string>& files)
+{
+ struct dirent** list=NULL;
+ int ne=scandir(path.c_str(),&list,NULL,NULL);
+ if(ne<0)
+    return false;
+ bool skipped=false;
+ vector<string> ivec;
+ set<string>::iterator si=iset.begin();
+ for(;si!=iset.end();si++)
+     ivec.push_back(*si);
+ for(int i=0;i<ne;i++)
+    {  
+     if(strcmp(list[i]->d_name,".")==0||
+        strcmp(list[i]->d_name,"..")==0||filefullname.size()<=path.size())
+       {
+        free(list[i]);
+        list[i]=NULL;
+        continue;
+       }
+     int path_size=path.size();
+     if(path[path.size()-1]!='/')
+        path_size++;
+     if(skipped==false&&
+        strcmp(filefullname.c_str()+path_size,list[i]->d_name)==0)//skip
+       {
+        free(list[i]);
+        list[i]=NULL;
+        skipped=true;
+        continue;
+       }
+     static char buf[4096];
+     if(list[i]->d_type==DT_DIR)
+       {
+        if(path[path.size()-1]!='/')
+           snprintf(buf,4095,"%s/%s/",path.c_str(),list[i]->d_name);
+        else
+           snprintf(buf,4095,"%s%s/",path.c_str(),list[i]->d_name);
+       }
+     else
+       {
+        if(path[path.size()-1]!='/')
+           snprintf(buf,4095,"%s/%s",path.c_str(),list[i]->d_name);
+        else
+           snprintf(buf,4095,"%s%s",path.c_str(),list[i]->d_name);
+       }
+
+     string fn=buf;
+     if(ivec.empty()==false)
+       {
+        pair<vector<string>::iterator,vector<string>::iterator> range;
+        range=equal_range(ivec.begin(),ivec.end(),fn);
+        if(range.first==range.second)//not found
+          {
+           if(fn[fn.size()-1]!='/')
+              files.push_back(fn);
+           else if(range.first!=ivec.end())
+             {
+              const string& as=*(range.first);
+              if(as.size()>fn.size()&&strncmp(as.c_str(),fn.c_str(),fn.size())==0)
+                 ;
+              else
+                 files.push_back(fn);
+             }
+          }
+       }
+     else
+        files.push_back(fn);
+     free(list[i]);
+     list[i]=NULL;
+    }//end for i
+ free(list);
+ return true;
 }
 //-------------------------------------------------------------------------------------------------

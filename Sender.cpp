@@ -1,14 +1,21 @@
 #include"Sender.hpp"
 //-------------------------------------------------------------------------------------------------
 
+//-------------------------------------------------------------------------------------------------
+
 bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
-                               string& content,int& item_new_number)
+                               string& include_content,string& exclude_content,
+                               int& include_item_number,int& exclude_item_number)
 {
  string rsync_list_file_name=conf.sender_tmp_path+RSYNC_LIST_FILE_NAME;
- string rp;
- item_new_number=0;
- content="";
- vector<string> newitems;
+ string rsync_exclude_file_name=conf.sender_tmp_path+RSYNC_EXCLUDE_FILE_NAME;
+ string rp,frp;
+ include_item_number=0;
+ exclude_item_number=0;
+ include_content="";
+ vector<string> include_items;
+ vector<string> exclude_items;
+ set<string> iset;
  for(unsigned int i=0;i<items.size();i++)
     {
      if(items[i].filename.size()<=conf.local_dir.size())
@@ -34,52 +41,87 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
                  rp=items[i].filename.substr(conf.local_dir.size());
                  if(rp.empty())
                     rp="./";
-                 if(newitems.empty()==false&&rp==newitems.back())
+                 if(include_items.empty()==false&&rp==include_items.back())
                     break;
-                 newitems.push_back(rp);
+                 RecheckExcludeFiles(items[i].filename,exclude_items);
+                 include_items.push_back(rp);
+                 iset.insert(items[i].filename);
                  break;
             case IN_DELETE:
             case IN_DELETE_SELF:
             case IN_MOVED_FROM:
                  rp=items[i].filename;
-                 rp=GetParentPath(rp);
-                 if(FileExists(rp)==false)
+                 if(rp.size()<conf.local_dir.size()||
+                    (rp.size()==conf.local_dir.size()&&rp!=conf.local_dir)
+                   )
                    {
                     #ifdef MYDEBUG
-                    kobe_printf("skip not exists %s\n",rp.c_str());
-                    #endif
-                    break;
+                    kobe_printf("skip not invalid %s\n",rp.c_str());
+                    #endif        
+                    break; 
                    }
-                 rp=rp.substr(conf.local_dir.size());
-                 if(rp.empty())
+                 if(rp.size()>conf.local_dir.size())
+                   {
+                    rp=GetParentPath(rp);
+                    if(FileExists(rp)==false)                    
+                      {                                          
+                       #ifdef MYDEBUG                            
+                       kobe_printf("skip not exists %s\n",rp.c_str());
+                       #endif                                    
+                       break;                                    
+                      }
+                    frp=rp;
+                    rp=rp.substr(conf.local_dir.size());
+                    if(rp.empty())   
+                       rp="./"; 
+                   }
+                 else
+                   {
+                    frp=rp;
                     rp="./";
-                 if(newitems.empty()==false&&rp==newitems.back())
+                   }
+                 if(include_items.empty()==false&&rp==include_items.back())
                     break;
-                 newitems.push_back(rp);
+                 RecheckExcludeFiles(frp,exclude_items);
+                 AddExcludeFiles(frp,items[i].filename,
+                                 iset,exclude_items);
+                 include_items.push_back(rp);
+                 iset.insert(items[i].filename);
                  break;
             default:
                  break;
            }//end switch
     }//end for i
- if(newitems.empty())
+ if(include_items.empty())
     return true;
- CoveredFileFilter(newitems);
- for(unsigned int i=0;i<newitems.size();i++)
-     content+=newitems[i]+"\n";
- return FilePutContent(rsync_list_file_name,content);
+ CoveredIncludeFileFilter(include_items);
+ for(unsigned int i=0;i<include_items.size();i++)
+     include_content+=include_items[i]+"\n";
+ sort(exclude_items.begin(),exclude_items.end());
+ unique(exclude_items.begin(),exclude_items.end());
+ for(unsigned int i=0;i<exclude_items.size();i++)
+    {
+     exclude_items[i]=exclude_items[i].substr(conf.local_dir.size());
+     exclude_content+=exclude_items[i]+"\n";
+    }
+ if(exclude_content.empty()==false)
+    FilePutContent(rsync_exclude_file_name,exclude_content);
+ return FilePutContent(rsync_list_file_name,include_content);
 }
 //-------------------------------------------------------------------------------------------------
 
 bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
 {
- string content;
- int item_new_number=0;
- if(MakeRsyncFileList(items,content,item_new_number)==false)
+ string include_content,exclude_content;
+ int include_item_number=0;
+ int exclude_item_number=0;
+ if(MakeRsyncFileList(items,include_content,exclude_content,
+                      include_item_number,exclude_item_number)==false)
    {
     errmsg="failed to write rsync list file";
     return false;
    }
- if(content.empty())
+ if(include_content.empty())
    {
     #ifdef MYDEBUG
     kobe_printf("%s\tskip empty rsync\n",GetCurrentTime().c_str());
@@ -89,6 +131,7 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  string rsync_error_filename=conf.sender_tmp_path+RSYNC_ERROR_FILE_NAME;
  string command="rsync "+RSYNC_PARAMS;
  command+=" --files-from="+conf.sender_tmp_path+RSYNC_LIST_FILE_NAME;
+ command+=" --exclude-from="+conf.sender_tmp_path+RSYNC_EXCLUDE_FILE_NAME;
  if(update_mode)
     command+=" --update";
  if(conf.rsync_bwlimit>0)
@@ -97,7 +140,8 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  command+=" 2>"+rsync_error_filename;
  kobe_printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  #ifdef MYDEBUG
- kobe_printf("%s\n",content.c_str());
+ kobe_printf("%s\n",include_content.c_str());
+ kobe_printf("%s\n",exclude_content.c_str());
  #endif
  int status=system(command.c_str());
  if(status==-1)
@@ -129,7 +173,7 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
        return false;
       }
    }
- senderstatus.sent_file_number+=item_new_number;
+ senderstatus.sent_file_number+=include_item_number;
  return true;
 }
 //-------------------------------------------------------------------------------------------------
