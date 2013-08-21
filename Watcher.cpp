@@ -234,6 +234,8 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
     isdir=true;
     fullname+="/";
    }
+ if(ievent->mask&IN_Q_OVERFLOW)
+    rlog->safe_mode=SYNC_DANGER_INOTIFY_OVERFLOW;
  map<int,string>::iterator mi=wd2path.find(wd);
  if(mi==wd2path.end())
    {

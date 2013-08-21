@@ -95,6 +95,7 @@ string GetParentPath(string path);
 bool NonblockSend(int fd,const char* buffer,unsigned int total_size);
 bool UnixSocketBlockSend(int fd,const char* buffer,unsigned int total_size);
 string StateToString(int state);
+string SafeModeToString(int safe_mode);
 string BuildHTMLResult(const Conf& conf,int state,
                        const WatcherStatus& ws,const SenderStatus& ss);
 void CoveredIncludeFileFilter(vector<string>& include_items);

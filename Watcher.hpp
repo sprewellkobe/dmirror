@@ -26,25 +26,20 @@ class WatcherStatus
 {
  public:
   ULL watch_wd_number;
-  string safe;
+  int safe_mode;
   string current_watcher_write_rlog_filename;
   off_t current_watcher_write_rlog_offset;
  public:
   Rlog* rlog;
  public:
-  WatcherStatus():watch_wd_number(0),safe("true"),
+  WatcherStatus():watch_wd_number(0),safe_mode(SYNC_SAFE),
                   current_watcher_write_rlog_offset(0),rlog(NULL)
   {}
   void Fresh()
   {
    if(rlog==NULL)
       return;
-   if(rlog->danger)
-     {
-      safe="false";
-     }
-   else
-      safe="true";
+   safe_mode=rlog->safe_mode;
    current_watcher_write_rlog_filename=rlog->current_filename;
    current_watcher_write_rlog_offset=rlog->current_file_wrotten_offset;
   }
@@ -52,7 +47,7 @@ class WatcherStatus
   string ToString()                                                                
   {
    return "1:"+ULLToStr(watch_wd_number)+
-          " 2:"+safe+
+          " 2:"+IntToStr(safe_mode)+
           " 3:"+current_watcher_write_rlog_filename+
           " 4:"+IntToStr(current_watcher_write_rlog_offset);
   }
@@ -72,7 +67,7 @@ class WatcherStatus
                    watch_wd_number=atoll(vec2[1].c_str());
                    break;
               case 2:
-                   safe=vec2[1];
+                   safe_mode=atoi(vec2[1].c_str());
                    break;
               case 3:
                    current_watcher_write_rlog_filename=vec2[1];

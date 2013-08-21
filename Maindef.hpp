@@ -63,6 +63,10 @@ const static int INOTIFY_READ_BUFFER_SIZE=16384;
 const static string RLOG_SURFIX=".rlog";
 const static int MASTER_WAIT_RLOG_NO_CHANGE_TO_SLAVE_TIME=5;
 const static int RLOG_BATCH_PROCESS_TIMEOUT=2;
+
+const static int SYNC_SAFE=1;
+const static int SYNC_DANGER_RLOG_OVERFLOW=-1;
+const static int SYNC_DANGER_INOTIFY_OVERFLOW=-2;
 //-------------------------------------------------------------------------------------------------
 //SENDER
 const static string STAT_FILE_NAME="stat.dat";

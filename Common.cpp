@@ -512,6 +512,23 @@ string StateToString(int state)
 }
 //-------------------------------------------------------------------------------------------------
 
+string SafeModeToString(int safe_mode)
+{
+ switch(safe_mode)
+       {
+        case SYNC_SAFE:
+              return "safe";
+        case SYNC_DANGER_INOTIFY_OVERFLOW:
+              return "inotify_overflow";
+        case SYNC_DANGER_RLOG_OVERFLOW:
+              return "rlog_overflow";
+        default:
+             break;
+       }
+ return "";
+}
+//-------------------------------------------------------------------------------------------------
+
 string BuildHTMLResult(const Conf& conf,int state,
                        const WatcherStatus& ws,const SenderStatus& ss)
 {
@@ -519,7 +536,7 @@ string BuildHTMLResult(const Conf& conf,int state,
  content+=StateToString(state)+"<br>";
  content+="<br>";
  content+="watch_wd_number:"+ULLToStr(ws.watch_wd_number)+"<br>";
- content+="safe:"+ws.safe+"<br>";
+ content+="safe:"+SafeModeToString(ws.safe_mode)+"<br>";
  content+="current_watcher_write_rlog_filename:"+ws.current_watcher_write_rlog_filename+"<br>";
  content+="current_watcher_write_rlog_offset:"+IntToStr(ws.current_watcher_write_rlog_offset)+"<br>";
  content+="<br>";

@@ -117,11 +117,11 @@ class Rlog
   off_t current_file_readed_offset;
   off_t current_file_wrotten_offset;
   time_t last_read_time;
-  bool danger;//danger rotate, cause dir not sync
+  int safe_mode;//danger rotate, cause dir not sync
  public:
   Rlog(const Conf& c):conf(c),fp(NULL),
                       current_file_readed_offset(0),current_file_wrotten_offset(0),
-                      last_read_time(time(NULL)),danger(false)
+                      last_read_time(time(NULL)),safe_mode(SYNC_SAFE)
   {}
   void UpdateConf(const Conf& c)
   {conf=c;}
@@ -195,7 +195,7 @@ class Rlog
             unlink(helpers.front().filefullname.c_str());//rotate
             kobe_printf("%s\tWARNING: rlog so full that unlink %s to rotate, maybe some update lost!\n",
                         GetCurrentTime().c_str(),helpers.front().filefullname.c_str());
-            danger=true;
+            safe_mode=SYNC_DANGER_RLOG_OVERFLOW;
            }
         }
       return fp;
