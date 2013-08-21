@@ -44,6 +44,14 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
                  if(include_items.empty()==false&&rp==include_items.back())
                     break;
                  RecheckExcludeFiles(items[i].filename,exclude_items);
+                 /*#ifdef MYDEBUG
+                 if(items[i].event_type==IN_MOVED_TO)
+                   {
+                    cout<<"item2: "<<items[i].filename<<endl;
+                    for(unsigned int i=0;i<exclude_items.size();i++)
+                        cout<<"\t"<<exclude_items[i]<<endl;
+                   }
+                 #endif*/
                  include_items.push_back(rp);
                  iset.insert(items[i].filename);
                  break;
@@ -97,7 +105,7 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
  CoveredIncludeFileFilter(include_items);
  for(unsigned int i=0;i<include_items.size();i++)
      include_content+=include_items[i]+"\n";
- sort(exclude_items.begin(),exclude_items.end());
+ //sort(exclude_items.begin(),exclude_items.end());
  unique(exclude_items.begin(),exclude_items.end());
  for(unsigned int i=0;i<exclude_items.size();i++)
     {

@@ -271,6 +271,10 @@ class Rlog
      }
    int rv=fprintf(fp,"%s\t%s\t%s\n",GetCurrentTime().c_str(),
                   EventType2String(event_type),filename.c_str());
+   //#ifdef MYDEBUG
+   //kobe_printf("%s\twrote2 %d %s %s\n",GetCurrentTime().c_str(),event_type,
+   //             EventType2String(event_type),filename.c_str());
+   //#endif
    if(rv<0)
      {
       err=errno;

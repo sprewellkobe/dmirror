@@ -44,7 +44,7 @@ void Watcher::OnPipeRead()
         else
            snprintf(buf,4095,"%s%s",path.c_str(),list[i]->d_name);
         watch_dir_list.push_back(buf);
-        write(pipe_pair[1],"x",1);
+        //write(pipe_pair[1],"x",1);
        }
      free(list[i]);
      list[i]=NULL;
@@ -60,7 +60,9 @@ void Watcher::OnPipeRead()
     close(pipe_pair[1]);
     pipe_pair[0]=0;
     pipe_pair[1]=0;
-   }   
+   }
+ else
+    write(pipe_pair[1],"x",1);
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -124,10 +126,10 @@ void Watcher::OnScanDir(const string& dirname)
            GetCurrentTime().c_str(),dirname.c_str(),inotify_fd,errno);
     addwatch=false;
    }
- #ifdef MYDEBUG
+ /*#ifdef MYDEBUG
  kobe_printf("%s\tadd new watch %s,%d,%d\n",GetCurrentTime().c_str(),
         dirname.c_str(),inotify_fd,ret);
- #endif
+ #endif*/
  watcherstatus.watch_wd_number++; 
  wd2path[ret]=dirname.substr(conf.local_dir.size());//to save memory
  //path2wd[dirname]=ret;
@@ -288,11 +290,14 @@ bool Watcher::DoEvent(struct inotify_event* ievent)
              rlog->Write(IN_MOVED_FROM,fullname,err);
              break;
         case IN_MOVED_TO:
-             #ifdef MYDEBUG
-             kobe_printf("%s\tmoved_to %s\n",GetCurrentTime().c_str(),fullname.c_str());
-             #endif
-             if(isdir&&AddDir(fullname))
+             if(isdir&&AddDir(fullname)==false)
+               {
+                #ifdef MYDEBUG
+                kobe_printf("%s\tERROR: failed to add %s %d\n",GetCurrentTime().c_str(),
+                            fullname.c_str(),errno);
+                #endif
                 return false;
+               }
              rlog->Write(IN_MOVED_TO,fullname,err);
              break;
         default:

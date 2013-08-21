@@ -256,9 +256,15 @@ int CreateServerUnixSocket(const string& usfn)
 bool VisitPath(const string& path,int& dir_count,Watcher* watcher)
 {
  struct dirent** list=NULL;
- int nEntries=scandir(path.c_str(),&list,NULL,NULL);
- if(nEntries<0)
+ int ne=scandir(path.c_str(),&list,NULL,NULL);
+ if(ne<0)
+   {
+    #ifdef MYDEBUG
+    printf("%s\tERROR: failed to scandir %s %d\n",GetCurrentTime().c_str(),
+           path.c_str(),errno);
+    #endif
     return false;
+   }
  dir_count++;
  if(watcher!=NULL)
    {
@@ -268,7 +274,7 @@ bool VisitPath(const string& path,int& dir_count,Watcher* watcher)
        watcher->OnScanDir(path+"/");
    }
  bool ret=true;
- for(int i=0;i<nEntries;i++)
+ for(int i=0;i<ne;i++)
     {
      if(strcmp(list[i]->d_name,".")==0||
         strcmp(list[i]->d_name,"..")==0)
@@ -602,7 +608,7 @@ void RecheckExcludeFiles(const string& filename,vector<string>& exclude_items)
    {
     pair<vector<string>::iterator,vector<string>::iterator> range;
     range=equal_range(exclude_items.begin(),exclude_items.end(),filename);
-    vector<string>::iterator vi=range.second;
+    vector<string>::iterator vi=range.first;
     for(;vi!=exclude_items.end();)
        {
         const string& es=*vi;
@@ -696,6 +702,7 @@ bool AddExcludeFiles(const string& path,const string& filefullname,
      list[i]=NULL;
     }//end for i
  free(list);
+ sort(files.begin(),files.end());
  return true;
 }
 //-------------------------------------------------------------------------------------------------
