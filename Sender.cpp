@@ -112,6 +112,8 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
      exclude_items[i]=exclude_items[i].substr(conf.local_dir.size());
      exclude_content+=exclude_items[i]+"\n";
     }
+ include_item_number=include_items.size();
+ exclude_item_number=exclude_items.size(); 
  return FilePutContent(rsync_exclude_file_name,exclude_content)==true&&
         FilePutContent(rsync_list_file_name,include_content)==true;
 }
