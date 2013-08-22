@@ -112,9 +112,8 @@ bool Sender::MakeRsyncFileList(const vector<RlogItem>& items,
      exclude_items[i]=exclude_items[i].substr(conf.local_dir.size());
      exclude_content+=exclude_items[i]+"\n";
     }
- if(exclude_content.empty()==false)
-    FilePutContent(rsync_exclude_file_name,exclude_content);
- return FilePutContent(rsync_list_file_name,include_content);
+ return FilePutContent(rsync_exclude_file_name,exclude_content)==true&&
+        FilePutContent(rsync_list_file_name,include_content)==true;
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -149,6 +148,7 @@ bool Sender::Send(const vector<RlogItem>& items,string& errmsg)
  kobe_printf("%s\tshell [%s]\n",GetCurrentTime().c_str(),command.c_str());
  #ifdef MYDEBUG
  kobe_printf("%s\n",include_content.c_str());
+ kobe_printf("/---------/\n");
  kobe_printf("%s\n",exclude_content.c_str());
  #endif
  int status=system(command.c_str());
@@ -203,7 +203,6 @@ bool Sender::SendAll(string& errmsg)
     errmsg="exitcode is "+IntToStr(exitcode);
     return false;
    }
- kobe_printf("%s\texit code %d\n",GetCurrentTime().c_str(),exitcode);
  return true;
 }
 //-------------------------------------------------------------------------------------------------

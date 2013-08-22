@@ -640,7 +640,7 @@ void StartSender(int argc,char* argv[])
 int process_monitor_timer_handler(struct aeEventLoop* eventLoop, long long id, void* clientData)
 {
  if(my_role!=ROLE_MAINBASE)
-    return 0;
+    return AE_NOMORE;
  if(processbase.sender_pid!=0)
    {   
     if(kill(processbase.sender_pid,0)!=0&&errno==ESRCH)
@@ -905,7 +905,7 @@ int sender_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void*
       }//end while
  if(my_role==ROLE_SENDER)
     return 1;
- return 0;
+ return AE_NOMORE;
 }
 //-------------------------------------------------------------------------------------------------
 
@@ -955,9 +955,13 @@ bool UnixSocketCommandFunction(const string& command,string& res)
        sender->senderstat->Load();
       }
     string errmsg;
+    struct timeval tv;
+    tv=BeginTiming();
+    kobe_printf("%s\tbegin send all...\n",GetCurrentTime().c_str());
     if(sender->SendAll(errmsg))
       {
-       kobe_printf("%s\tsend all finished, sender started\n",GetCurrentTime().c_str());
+       kobe_printf("%s\tsend all finished %.2f sec, sender loop started\n",
+                   GetCurrentTime().c_str(),EndTiming(tv));
        SenderLoopRun();
        res="ok";
       }
@@ -1018,7 +1022,7 @@ bool UnixSocketCommandFunction(const string& command,string& res)
 int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void* clientData)
 {
  if(my_role!=ROLE_MAINBASE)
-    return 0;
+    return AE_NOMORE;
  if(my_state==STATE_TO_MASTER_WAIT_SLAVE_OK)
    {
     string url="http://"+conf.remote_pair.ToStr()+"/"+HTTP_COMMAND_GET_STATE;
