@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <sys/inotify.h>
+#include <stddef.h>
 #include "ae.h"
 #include "Maindef.hpp"
 #include "Common.hpp"
