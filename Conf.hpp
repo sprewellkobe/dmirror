@@ -15,7 +15,7 @@ class Conf
   string watcher_unix_socket_path;
   string local_dir;
   string rlog_path;
-  uint64_t rlog_file_max_size;
+  unsigned int rlog_file_max_size;
   int rlog_max_file_number;
  public://sender
   string sender_unix_socket_path;
@@ -33,6 +33,86 @@ class Conf
          rsync_bwlimit(0),rlog_reader_batch_item_number(0),
          log_switch(false)
   {}
+ private:
+  unsigned int StringToByteSize(string s)
+  {
+   unsigned int an=1;
+   ToLower(s);
+   if(s.empty()==false&&
+      (s[s.size()-1]=='m'||s[s.size()-1]=='k'||s[s.size()]=='g')
+     )
+     {
+      an=1024;
+      if(s[s.size()-1]=='m')
+         an*=1024;
+      else if(s[s.size()-1]=='g')
+         an*=1024*1024;
+      s.erase(s.size()-1);
+     }
+   return atoi(s.c_str())*an;
+  }
+  //---------------------------------------------
+  bool PathIsValid(const string& path)
+  {
+   if(path.empty())
+      return false;
+   if(path[path.size()-1]!='/')
+      return false;
+   return FileExists(path); 
+  }
+  //---------------------------------------------
+  bool IsValid(string& errmsg)
+  {
+   if(http_server_port<1000)
+     {
+      errmsg="http_server_port invalid";
+      return false;
+     }
+   if(PathIsValid(mainbase_unix_socket_path)==false||
+      PathIsValid(watcher_unix_socket_path)==false||
+      PathIsValid(sender_unix_socket_path)==false)
+     {
+      errmsg="unix_socket_path invalid";
+      return false;
+     }
+   if(remote_pair.port<1000)
+     {
+      errmsg="remote_pair port invalid";
+      return false;
+     }
+   if(PathIsValid(local_dir)==false)
+     {
+      errmsg="local_dir invalid";
+      return false;
+     }
+   if(PathIsValid(rlog_path)==false)
+     {
+      errmsg="rlog_path invalid";
+      return false;
+     }
+   if(PathIsValid(sender_tmp_path)==false)
+     {
+      errmsg="sender_tmp_path invalid";
+      return false; 
+     }
+   if(rlog_reader_batch_item_number==0)
+     {
+      errmsg="rlog_reader_batch_item_number invalid";
+      return false;
+     }
+   if(PathIsValid(stat_file_path)==false)
+     {
+      errmsg="stat_file_path invalid";
+      return false;
+     } 
+   if(PathIsValid(log_path)==false)
+     {
+      errmsg="log_path invalid";
+      return false;
+     }
+   return true;
+  }
+  //---------------------------------------------
  public:
   bool LoadFromFile(const string& filename,string& errmsg)
   {
@@ -83,7 +163,7 @@ class Conf
       errmsg="failed to load item rlog_file_max_size";
       return false;
      }
-   rlog_file_max_size=atol(s.c_str());
+   rlog_file_max_size=StringToByteSize(s);
    if(inip.Get("watcher","rlog_max_file_number",s)==false)
      {
       errmsg="failed to load item rlog_max_file_number";
@@ -113,16 +193,7 @@ class Conf
       errmsg="failed to load item rsync_bwlimit";
       return false;
      }
-   unsigned int an=1;
-   ToLower(s);
-   if(s.empty()==false&&(s[s.size()-1]=='m'||s[s.size()-1]=='k'))
-     {
-      an=1024;
-      if(s[s.size()-1]=='m')
-         an*=1024;
-      s.erase(s.size()-1);
-     }
-   rsync_bwlimit=atoi(s.c_str())*an;
+   rsync_bwlimit=StringToByteSize(s);
    if(inip.Get("sender","rlog_reader_batch_item_number",s)==false)
      {
       errmsg="failed to load item rlog_reader_batch_item_number";
@@ -147,8 +218,12 @@ class Conf
       return false;
      }
    log_path=s;
+  
+   if(IsValid(errmsg)==false)
+      return false;
    return true;
   }//end LoadFromFile
+  //---------------------------------------------
   string ToString()
   {
    string str;
@@ -173,6 +248,7 @@ class Conf
    str+="log_path:"+log_path+"\n";
    return str;
   }
+  //---------------------------------------------
   void Display()
   {
    cout<<"//------------------------------------"<<endl;

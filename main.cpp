@@ -1126,6 +1126,15 @@ int main(int argc,char* argv[])
  my_argc=argc;
  my_argv=argv;
  signal(SIGCHLD,SIG_IGN); 
+
+ string errmsg;
+ if(conf.LoadFromFile(argv[2],errmsg)==false)
+   {
+    kobe_printf("%s\tERROR: failed to load conf, %s\n",GetCurrentTime().c_str(),
+                errmsg.c_str());
+    return -3;
+   }
+ conf.Display();
  //----------------------------------------------
  StartWatcher(argc,argv);//fork watcher
  StartSender(argc,argv);//fork sender
@@ -1133,14 +1142,6 @@ int main(int argc,char* argv[])
  //----------------------------------------------
  atexit(mainbase_exit);
  //mainbase run
- string errmsg;
- if(conf.LoadFromFile(argv[2],errmsg)==false)
-   {
-    kobe_printf("%s\tERROR: failed to load conf,%s\n",GetCurrentTime().c_str(),
-                errmsg.c_str());
-    return -3;
-   }
- conf.Display();
  //----------------------------------------------
  main_el=aeCreateEventLoop();
  if(main_el==NULL)
