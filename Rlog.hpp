@@ -176,7 +176,6 @@ class Rlog
       (uint64_t)(GetFileSize(helpers.back().filefullname))>=conf.rlog_file_max_size)
      {
       struct timeval tv;
-      //memset(&tv,sizeof(tv),0);
       memset(&tv, 0, sizeof(tv));
       gettimeofday(&tv,NULL);
       string s1=Timet2String(tv.tv_sec);
