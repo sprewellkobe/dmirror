@@ -37,6 +37,7 @@ class ProcessBase
 int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, void* clientData);
 bool HTTPCommandFunction(const string& command,string& res);
 bool UnixSocketCommandFunction(const string& command,string& res);
+bool Notify(int role,const string& command,string& result);
 //-------------------------------------------------------------------------------------------------
 
 static ProcessBase processbase;
@@ -645,15 +646,29 @@ int process_monitor_timer_handler(struct aeEventLoop* eventLoop, long long id, v
 {
  if(my_role!=ROLE_MAINBASE)
     return AE_NOMORE;
+ string rs;
  if(processbase.sender_pid!=0)
    {   
     if(kill(processbase.sender_pid,0)!=0&&errno==ESRCH)
+      {
+       processbase.sender_pid=0;
        StartSender(my_argc,my_argv);
+       if(my_state==STATE_MASTER&&processbase.sender_pid!=0)
+         {
+          //if restart sender and in master state, we begin sender loop
+          usleep(5000);
+          Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_START_SENDER2,rs);
+          kobe_printf("notified start sender2\n");
+         }
+      }
    }
  if(processbase.watcher_pid!=0)
    {
     if(kill(processbase.watcher_pid,0)!=0&&errno==ESRCH)
+      {
+       processbase.watcher_pid=0;
        StartWatcher(my_argc,my_argv);
+      }
    }
  return PROCESSES_MONITOR_TIME_INTERVAL_MS;
 }
@@ -971,6 +986,17 @@ bool UnixSocketCommandFunction(const string& command,string& res)
       }
     else
        res="error: send all "+errmsg;
+    return true;
+   }
+ else if(command==UNIX_SOCKET_COMMAND_START_SENDER2)
+   {
+    if(sender->senderstat==NULL)
+      {
+       sender->senderstat=new SenderStat(conf);
+       sender->senderstat->Load();
+      }
+    SenderLoopRun();
+    res="ok";
     return true;
    }
  else if(command==UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE)//when sender received update mode true

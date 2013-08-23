@@ -8,6 +8,7 @@ bool UnixSocketCommand::Do(string& result,COMMAND_FUNCTION unix_socket_command_f
     result="ok"+NC_END_TOKEN;
  else if(cmd==UNIX_SOCKET_COMMAND_START_WATCHER||
          cmd==UNIX_SOCKET_COMMAND_START_SENDER1||
+         cmd==UNIX_SOCKET_COMMAND_START_SENDER2||
          cmd==UNIX_SOCKET_COMMAND_STOP_SENDER||
          cmd==UNIX_SOCKET_COMMAND_STOP_WATCHER||
          cmd==UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE||

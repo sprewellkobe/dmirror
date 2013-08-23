@@ -36,7 +36,8 @@ const static string HTTP_COMMAND_UPDATE_CONF="updateconf";
 
 const static string UNIX_SOCKET_COMMAND_START_WATCHER="startwatcher";
 const static string UNIX_SOCKET_COMMAND_STOP_WATCHER="stopwatcher";
-const static string UNIX_SOCKET_COMMAND_START_SENDER1="startsender1";
+const static string UNIX_SOCKET_COMMAND_START_SENDER1="startsender1";//include send all
+const static string UNIX_SOCKET_COMMAND_START_SENDER2="startsender2";//no include send all
 const static string UNIX_SOCKET_COMMAND_STOP_SENDER="stopsender";
 const static string UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_TRUE="setsenderupdatemodetrue";
 const static string UNIX_SOCKET_COMMAND_SET_SENDER_UPDATE_MODE_FALSE="setsenderupdatemodefalse";

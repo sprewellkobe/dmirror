@@ -137,8 +137,8 @@ class Rlog
       current_filename=ss.current_filename;
       fp=fopen(ss.current_filename.c_str(),"r");
       fseek(fp,ss.offset,SEEK_SET);
-      kobe_printf("%s\tcontinue read from %s\n",GetCurrentTime().c_str(),
-                  ss.current_filename.c_str());
+      kobe_printf("%s\tcontinue read from %s:%lu\n",GetCurrentTime().c_str(),
+                  ss.current_filename.c_str(),ss.offset);
       return fp;
      }
    //new file
@@ -161,8 +161,8 @@ class Rlog
       return NULL;
    current_filename=helpers[i].filefullname;
    fp=fopen(current_filename.c_str(),"r");
-   kobe_printf("%s\tfirst read from %s\n",GetCurrentTime().c_str(),
-          current_filename.c_str());
+   kobe_printf("%s\tfirst read from %s:0\n",GetCurrentTime().c_str(),
+               current_filename.c_str());
    return fp;
   }
   //---------------------------------------------
@@ -272,10 +272,6 @@ class Rlog
      }
    int rv=fprintf(fp,"%s\t%s\t%s\n",GetCurrentTime().c_str(),
                   EventType2String(event_type),filename.c_str());
-   //#ifdef MYDEBUG
-   //kobe_printf("%s\twrote2 %d %s %s\n",GetCurrentTime().c_str(),event_type,
-   //             EventType2String(event_type),filename.c_str());
-   //#endif
    if(rv<0)
      {
       err=errno;
