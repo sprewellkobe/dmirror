@@ -2,7 +2,7 @@
 #include "MyCurl.hpp"
 //-----------------------------------------------------------------
 
-bool MyCurl::GetURL(const string& url,int& response_code,string& result,string& errormsg)
+bool MyCurl::GetURL(const string& url,long& response_code,string& result,string& errormsg)
 {
  response_code=-1;
  bool suc=false;

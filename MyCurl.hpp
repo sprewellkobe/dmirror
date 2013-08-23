@@ -51,7 +51,7 @@ public:
   curl_easy_setopt(curl,CURLOPT_NOSIGNAL,1);
  }
 public:
- bool GetURL(const string& url,int& response_code,string& result,string& errormsg);
+ bool GetURL(const string& url,long& response_code,string& result,string& errormsg);
 public:
  static int writefunction(void* ptr,size_t size,size_t nmemb,void* stream);
  static int readfunction(void* ptr,size_t size,size_t nmemb,void* stream);

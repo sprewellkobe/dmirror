@@ -658,7 +658,6 @@ int process_monitor_timer_handler(struct aeEventLoop* eventLoop, long long id, v
           //if restart sender and in master state, we begin sender loop
           usleep(5000);
           Notify(ROLE_SENDER,UNIX_SOCKET_COMMAND_START_SENDER2,rs);
-          kobe_printf("notified start sender2\n");
          }
       }
    }
@@ -809,7 +808,7 @@ bool HTTPCommandFunction(const string& command,string& res)
     MyCurl mycurl;
     mycurl.SetConnectionTimeout(1);
     mycurl.SetTimeout(1);
-    int response_code;
+    long response_code;
     string result;
     string errmsg;
     if(my_state==STATE_NULL)
@@ -1059,7 +1058,7 @@ int mainbase_loop_timer_handler(struct aeEventLoop* eventLoop, long long id, voi
     MyCurl mycurl;
     mycurl.SetConnectionTimeout(1);
     mycurl.SetTimeout(1);
-    int response_code;
+    long response_code;
     string result;
     string errmsg;
     if(mycurl.GetURL(url,response_code,result,errmsg)==true&&
