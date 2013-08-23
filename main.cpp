@@ -185,7 +185,8 @@ void mainbase_exit()
  if(main_el!=NULL) 
    {
     aeDeleteFileEvent(main_el,http_server_fd,AE_READABLE);
-    aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
+    if(unix_socket_server_fd>=0)
+       aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
     if(process_monitor_timer_id>0)
        aeDeleteTimeEvent(main_el,process_monitor_timer_id);
     if(mainbase_loop_timer_id>0)
@@ -202,7 +203,8 @@ void watcher_exit()
 {
  if(main_el!=NULL)
    {
-    aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
+    if(unix_socket_server_fd>=0)
+       aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
     aeDeleteEventLoop(main_el);
    }                         
  main_el=NULL;
@@ -219,7 +221,8 @@ void sender_exit()
     if(sender_loop_timer_id>0)
        aeDeleteTimeEvent(main_el,sender_loop_timer_id);
     sender_loop_timer_id=0;
-    aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
+    if(unix_socket_server_fd>=0)
+       aeDeleteFileEvent(main_el,unix_socket_server_fd,AE_READABLE);
     aeDeleteEventLoop(main_el);
    }
  main_el=NULL;
@@ -506,7 +509,7 @@ void UnixSocketServerRun()
              break;
        }//end switch
  unix_socket_server_fd=CreateServerUnixSocket(filename);
- if(unix_socket_server_fd==0)
+ if(unix_socket_server_fd<0)
    {
     kobe_printf("%s\tERROR: failed to create unix socket %s,%d\n",
                 GetCurrentTime().c_str(),filename.c_str(),errno);
