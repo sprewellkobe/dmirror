@@ -1,11 +1,24 @@
 # What is DMirror
-- DMirror is a real-time directory sync tool, used for local and remote file sync. 
+- DMirror is a real-time directory sync tool, used for local and remote file sync. Compare to DRBD, DMirror has these features:
+  - 1, DMirror is built on application level, on the top of file system
+  - 2, DMirror's slave can be read, even write
+  - 3, DMirror can switch master with slave very easy
+  - 4, DMirror has a monitor HTTP display page
 
 # How to use
+  - 0.1, set /proc/sys/fs/inotify/max_user_watches and /proc/sys/fs/inotify/max_queued_events to proper number
+  - 0.2, set local and remote rsync dir
   - 1, start master, ./dmirror mainbase dmirror1.ini
   - 2, start slave, ./dmirror mainbase dmirror2.ini
-  - 3, set local dir and remote dir
-  - 4, curl "http://your_master_ip:your_master_port/setmaster"
+  - 3, curl "http://your_master_ip:your_master_port/setmaster" to start master-slave sync
+  - 4, when you want to switch master-slave, curl "http://your_slave_ip:your_slave_port/setmaster" to start a new slave-master sync
+
+# How DMirror works
+  - depend on rsync(recommend 3.0.9),inotify(kernal 2.6.13+), and file system
+  - DMirror has 3 process roles:
+    1, mainbase: accepet HTTP command, communicate with other processes by UNIX socket, monitor other processes, and control all state-transition
+    2, watcher: use inotify to watch what file created,deleted,modified and write to RLog
+    3, sender: read from RLog and send rsync command to remote
 
 # Supported HTTP command
   - setmaster
@@ -14,3 +27,7 @@
   - getstatus(HTML)
   - showconf
   - updateconf
+
+# Author
+  kobe, feedback sprewellkobe@163.com
+  thanks renzhong to test
