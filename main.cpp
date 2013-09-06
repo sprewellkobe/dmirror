@@ -488,7 +488,6 @@ void unix_socket_server_accept_handler(aeEventLoop* el,int fd,void* arg,int mask
                 GetCurrentTime().c_str(),sr->client_filename.c_str(),rv);
     return;
    }
- kobe_printf("%s\tunix socket accept %s\n",GetCurrentTime().c_str(),sr->client_filename.c_str());
 }
 //-------------------------------------------------------------------------------------------------
 
