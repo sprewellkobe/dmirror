@@ -157,6 +157,8 @@ void kobe_printf(const char* format,...)//worker log wrapper
           }//end switch
     if(fp!=NULL)
        vfprintf(fp,format,args);
+    else
+       vprintf(format,args);
     va_end(args);
     if(fp!=NULL&&ftell(fp)>LOG_FILE_MAX_SIZE)
       {
